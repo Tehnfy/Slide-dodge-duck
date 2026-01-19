@@ -1,16 +1,69 @@
+using System;
+using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    [SerializeField] CharacterController controller;
+    [SerializeField] GameObject ActiveChar;
+    [SerializeField] Vector3 playerVelocity;
+    [SerializeField] bool groundedPlayer;
+    [SerializeField] bool isJumping; 
+    [SerializeField] float gravityValue;
+    [SerializeField] float moveX;
+    [SerializeField] float moveY;
+    [SerializeField] float moveSpeed = 4f;
+    [SerializeField] float turnSpeed = 4f;
+    [SerializeField] float jumpHeight = 1.5f;
+
+
     void Start()
     {
+        moveSpeed = 4f;
+        gravityValue = -10f;
         
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        groundedPlayer = controller.isGrounded;
+        if(groundedPlayer && playerVelocity.y<0)
+        {
+            moveSpeed = 4f;
+            playerVelocity.y = 0f;
+
+            transform.Rotate(0, Input.GetAxis("Horizontal") * turnSpeed, 0);
+            Vector3 forward = transform.TransformDirection(Vector3.forward);
+            float curSpeed = moveSpeed * Input.GetAxis("Vertical");
+            controller.SimpleMove(forward * curSpeed);
+
+            if (Input.GetButtonDown("Jump") && groundedPlayer)
+            {
+                isJumping = true;
+                ActiveChar.GetComponent<Animator>().Play("Jump");
+                playerVelocity.y += 10f;
+            }
+
+            playerVelocity.y = gravityValue * Time.deltaTime;
+            controller.Move(playerVelocity * Time.deltaTime);
+
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A)) ;
+
+            this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.001f;
+            if (isJumping == false)
+            {
+                ActiveChar.GetComponent<Animator>().Play("StandardRun");
+            }
+            else
+            {
+                this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.901f;
+                if (isJumping == false)
+            {
+                ActiveChar.GetComponent<Animator>().Play("StandardRun");
+            }
+            }
+        }
     }
 }
