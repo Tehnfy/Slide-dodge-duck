@@ -29,41 +29,45 @@ public class Movement : MonoBehaviour
     void Update()
     {
         groundedPlayer = controller.isGrounded;
-        if(groundedPlayer && playerVelocity.y<0)
+        if (groundedPlayer && playerVelocity.y < 0)
         {
             moveSpeed = 4f;
             playerVelocity.y = 0f;
+        }
 
-            transform.Rotate(0, Input.GetAxis("Horizontal") * turnSpeed, 0);
-            Vector3 forward = transform.TransformDirection(Vector3.forward);
-            float curSpeed = moveSpeed * Input.GetAxis("Vertical");
-            controller.SimpleMove(forward * curSpeed);
+        transform.Rotate(0, Input.GetAxis("Horizontal") * turnSpeed, 0);
+        Vector3 forward = transform.TransformDirection(Vector3.forward);
+        float curSpeed = moveSpeed * Input.GetAxis("Vertical");
+        controller.SimpleMove(forward * curSpeed);
 
-            if (Input.GetButtonDown("Jump") && groundedPlayer)
-            {
-                isJumping = true;
-                ActiveChar.GetComponent<Animator>().Play("Jump");
-                playerVelocity.y += 10f;
-            }
+        if (Input.GetButtonDown("Jump") && groundedPlayer)
+        {
+            isJumping = true;
+            ActiveChar.GetComponent<Animator>().Play("Jump");
+            playerVelocity.y += 10f;
+        }
 
-            playerVelocity.y = gravityValue * Time.deltaTime;
-            controller.Move(playerVelocity * Time.deltaTime);
+        playerVelocity.y = gravityValue * Time.deltaTime;
+        controller.Move(playerVelocity * Time.deltaTime);
 
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A)) ;
-
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A))
+        {
             this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.001f;
             if (isJumping == false)
             {
-                ActiveChar.GetComponent<Animator>().Play("StandardRun");
+                ActiveChar.GetComponent<Animator>().Play("Standard Run");
             }
-            else
+            Debug.Log("Movement pressed");
+        }
+        else
+        {
+            this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.901f;
+            if (isJumping == false)
             {
-                this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.901f;
-                if (isJumping == false)
-            {
-                ActiveChar.GetComponent<Animator>().Play("StandardRun");
-            }
+                ActiveChar.GetComponent<Animator>().Play("Standard Run");
             }
         }
     }
 }
+
+
