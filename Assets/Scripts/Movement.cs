@@ -1,6 +1,3 @@
-using System;
-using JetBrains.Annotations;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
@@ -23,15 +20,14 @@ public class Movement : MonoBehaviour
     {
         moveSpeed = 4f;
         gravityValue = -10f;
-        
     }
 
     void Update()
     {
         groundedPlayer = controller.isGrounded;
+
         if (groundedPlayer && playerVelocity.y < 0)
         {
-            moveSpeed = 4f;
             playerVelocity.y = 0f;
         }
 
@@ -45,6 +41,7 @@ public class Movement : MonoBehaviour
             isJumping = true;
             ActiveChar.GetComponent<Animator>().Play("Jump");
             playerVelocity.y += 10f;
+            Debug.Log("Jump!");
         }
 
         playerVelocity.y = gravityValue * Time.deltaTime;
@@ -57,14 +54,13 @@ public class Movement : MonoBehaviour
             {
                 ActiveChar.GetComponent<Animator>().Play("Standard Run");
             }
-            Debug.Log("Movement pressed");
         }
         else
         {
             this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.901f;
             if (isJumping == false)
             {
-                ActiveChar.GetComponent<Animator>().Play("Standard Run");
+                ActiveChar.GetComponent<Animator>().Play("Idle");
             }
         }
     }
