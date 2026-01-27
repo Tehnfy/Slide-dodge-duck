@@ -14,7 +14,7 @@ public class GemControl : MonoBehaviour
     [SerializeField] AudioSource gemCollect;
     [Space]
     [Header("ScoreSys")]
-    [SerializeField] int gemScore = 1;
+    [SerializeField] int gemScore = 10;
 
     void Start()
     {
@@ -31,8 +31,9 @@ public class GemControl : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        ScoreCotntrol.totalScore += gemScore;        
         gemCollect.Play();
-        Destroy(gameObject);        
+        Destroy(gameObject);
     }
 }
 
