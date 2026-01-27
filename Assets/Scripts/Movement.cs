@@ -1,3 +1,8 @@
+using System;
+using System.Collections;
+using JetBrains.Annotations;
+using NUnit.Framework;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
@@ -25,9 +30,9 @@ public class Movement : MonoBehaviour
     void Update()
     {
         groundedPlayer = controller.isGrounded;
-
         if (groundedPlayer && playerVelocity.y < 0)
         {
+            moveSpeed = 4f;
             playerVelocity.y = 0f;
         }
 
@@ -35,13 +40,15 @@ public class Movement : MonoBehaviour
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         float curSpeed = moveSpeed * Input.GetAxis("Vertical");
         controller.SimpleMove(forward * curSpeed);
+        groundedPlayer = true;
 
-        if (Input.GetButtonDown("Jump") && groundedPlayer)
+        if (Input.GetKey(KeyCode.Space) && groundedPlayer)
         {
             isJumping = true;
+            groundedPlayer = false;
             ActiveChar.GetComponent<Animator>().Play("Jump");
             playerVelocity.y += 10f;
-            Debug.Log("Jump!");
+            StartCoroutine(ResetJump());
         }
 
         playerVelocity.y = gravityValue * Time.deltaTime;
@@ -63,6 +70,12 @@ public class Movement : MonoBehaviour
                 ActiveChar.GetComponent<Animator>().Play("Idle");
             }
         }
+    }
+
+    IEnumerator ResetJump()
+    {
+        yield return new WaitForSeconds(0.8f);
+        isJumping = false;
     }
 }
 

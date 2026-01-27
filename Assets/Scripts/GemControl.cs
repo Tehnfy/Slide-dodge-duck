@@ -12,6 +12,9 @@ public class GemControl : MonoBehaviour
     [SerializeField] float bounceFreq = 1f;
     private Vector3 startPos;
     [SerializeField] AudioSource gemCollect;
+    [Space]
+    [Header("ScoreSys")]
+    [SerializeField] int gemScore = 1;
 
     void Start()
     {
@@ -26,7 +29,7 @@ public class GemControl : MonoBehaviour
         transform.localPosition = new Vector3(startPos.x, newY, startPos.z);
     }
 
-    void OggerEnter(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         gemCollect.Play();
         Destroy(gameObject);        
