@@ -13,7 +13,7 @@ public class Movement : MonoBehaviour
     [SerializeField] Vector3 playerVelocity;
     [SerializeField] bool groundedPlayer;
     [SerializeField] bool isJumping; 
-    [SerializeField] float gravityValue;
+    [SerializeField] float gravityValue = -8.91f;
     [SerializeField] float moveX;
     [SerializeField] float moveY;
     [SerializeField] float moveSpeed = 4f;
