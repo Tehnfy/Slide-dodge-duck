@@ -1,6 +1,5 @@
 using System.Collections;
 using TMPro.EditorUtilities;
-using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,7 +10,6 @@ public class TimeLevel : MonoBehaviour
     [SerializeField] int timeLeft = 60;
     [SerializeField] bool takingSecond = false;
     [SerializeField] GameObject playerControl;
-    [SerializeField] bool isRespawning = false;
     
     [Space]
     [Header("Sounds")]
@@ -20,7 +18,6 @@ public class TimeLevel : MonoBehaviour
     [SerializeField] GameObject fadeOut;
     [SerializeField] GameObject timeUpText;
 
-
     void Update()
     {
         timeBox.GetComponent<TMPro.TMP_Text>().text = "TIME LEFT : " + timeLeft;
@@ -28,16 +25,13 @@ public class TimeLevel : MonoBehaviour
         {
             StartCoroutine(RemoveTime());
         }
-        if (timeLeft == 0 &&  isRespawning == false)
+        if (timeLeft == 0)
         {
-            isRespawning = true;
-            timeUpSound.Play();
             levelBGM.SetActive(false);
+            timeUpSound.Play();
             fadeOut.SetActive(true);
             timeUpText.SetActive(true);
             StartCoroutine(TimeRunOut());
-            StartCoroutine(DeathLoad());
-
         }
     }
 
@@ -51,7 +45,7 @@ public class TimeLevel : MonoBehaviour
 
     IEnumerator DeathLoad()
     {
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(1f);
         SceneManager.LoadScene(3);
     }
 
