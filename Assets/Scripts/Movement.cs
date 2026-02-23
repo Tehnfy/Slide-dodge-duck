@@ -1,81 +1,106 @@
 using System;
-using System.Collections;
-using JetBrains.Annotations;
-using NUnit.Framework;
-using Unity.VisualScripting;
+using Unity.Mathematics;
+using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Movement : MonoBehaviour
 {
+    [Header("References")]
+    private CharacterController controller;
+    [SerializeField] private Transform followCam;
 
-    [SerializeField] CharacterController controller;
-    [SerializeField] GameObject ActiveChar;
-    [SerializeField] Vector3 playerVelocity;
-    [SerializeField] bool groundedPlayer;
-    [SerializeField] bool isJumping; 
-    [SerializeField] float gravityValue = -8.91f;
-    [SerializeField] float moveX;
-    [SerializeField] float moveY;
-    [SerializeField] float moveSpeed = 4f;
-    [SerializeField] float turnSpeed = 4f;
-    [SerializeField] float jumpHeight = 1.5f;
+    [Space]
+    [Header("Movement Settings")]
+    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float turnSpeed = 3f;
+    [SerializeField] private float gravity = 7.81f;
+    [SerializeField] private float jumpHeight = 0.4f;
+    [SerializeField] private float sprintSpeed = 10f;
+    [SerializeField] private float sprintTransitSpeed = 5f;
 
+
+    private float verticalVelocity;
+    private float speed;
+
+    [Space]
+    [Header ("Input")]
+    private float moveInput;
+    private float turnInput;
 
     void Start()
     {
-        moveSpeed = 4f;
-        gravityValue = -10f;
+        controller = GetComponent<CharacterController>();
     }
 
-    void Update()
+    private void Update()
     {
-        groundedPlayer = controller.isGrounded;
-        if (groundedPlayer && playerVelocity.y < 0)
+        InputManagement();
+        TheMovement();
+        Turn();
+        VerticalForceCalc();
+    }
+
+    private void TheMovement()
+    {
+        GroundMovement();
+    }
+    private void GroundMovement()
+    {
+        Vector3 move = new Vector3(turnInput, 0, moveInput);
+        move = followCam.transform.TransformDirection(move);
+        
+        move.y = VerticalForceCalc();
+
+        if (Input.GetKey(KeyCode.LeftShift))
         {
-            moveSpeed = 4f;
-            playerVelocity.y = 0f;
+            speed = Mathf.Lerp(speed, sprintSpeed, sprintTransitSpeed * Time.deltaTime);
+        }
+        else
+        {
+            speed = Mathf.Lerp(speed, walkSpeed, sprintTransitSpeed * Time.deltaTime);
         }
 
-        transform.Rotate(0, Input.GetAxis("Horizontal") * turnSpeed, 0);
-        Vector3 forward = transform.TransformDirection(Vector3.forward);
-        float curSpeed = moveSpeed * Input.GetAxis("Vertical");
-        controller.SimpleMove(forward * curSpeed);
-        groundedPlayer = true;
+        move *= speed;
+        controller.Move(move * Time.deltaTime);
+    }
+    private void InputManagement()
+    {
+        moveInput = Input.GetAxis("Vertical");
+        turnInput = Input.GetAxis("Horizontal");
 
-        if (Input.GetKey(KeyCode.Space) && groundedPlayer)
+    }
+    private void Turn()
+    {
+        if (Mathf.Abs(turnInput) > 0.1f || Mathf.Abs(moveInput) > 0.1f)
         {
-            isJumping = true;
-            groundedPlayer = false;
-            ActiveChar.GetComponent<Animator>().Play("Jump");
-            playerVelocity.y += 10f;
-            StartCoroutine(ResetJump());
+            Vector3 currentLookDirection = controller.velocity.normalized;
+            currentLookDirection.y = 0;
+
+            currentLookDirection.Normalize();
+
+            Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
+
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
+            Time.deltaTime * turnSpeed);
         }
+    }
 
-        playerVelocity.y = gravityValue * Time.deltaTime;
-        controller.Move(playerVelocity * Time.deltaTime);
-
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A))
+    private float VerticalForceCalc()
+    {
+        if (controller.isGrounded)
         {
-            this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.001f;
-            if (isJumping == false)
+            verticalVelocity = -1;
+            if (Input.GetButtonDown("Jump"))
             {
-                ActiveChar.GetComponent<Animator>().Play("Standard Run");
+                verticalVelocity = Mathf.Sqrt(jumpHeight*gravity);
             }
         }
         else
         {
-            this.gameObject.GetComponent<CharacterController>().minMoveDistance = 0.901f;
-            if (isJumping == false)
-            {
-                ActiveChar.GetComponent<Animator>().Play("Idle");
-            }
+            verticalVelocity -= gravity * Time.deltaTime;
         }
-    }
-
-    IEnumerator ResetJump()
-    {
-        yield return new WaitForSeconds(0.8f);
-        isJumping = false;
+        return verticalVelocity;
     }
 }
 
