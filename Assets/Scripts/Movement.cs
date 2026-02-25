@@ -16,7 +16,7 @@ public class Movement : MonoBehaviour
     [Space]
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float turnSpeed = 3f;
+    [SerializeField] private float turnSpeed = 5f;
     [SerializeField] private float gravity = 7.81f;
     [SerializeField] private float jumpHeight = 0.4f;
     [SerializeField] private float sprintSpeed = 10f;
@@ -39,6 +39,7 @@ public class Movement : MonoBehaviour
     [Header("State Tarckers")]
     private bool isCrouching;
     private bool isSliding;
+    private bool Grounded;
     private float currentSlideSpeed;
     private Vector3 slideDirection;
     
@@ -84,6 +85,7 @@ public class Movement : MonoBehaviour
         anim.SetBool("isMoving",isMoving);
         anim.SetBool("isCrouching",isCrouching);
         anim.SetBool("isSliding", isSliding);
+        anim.SetBool("Grounded", Grounded);
     }
 
     private void TheMovement()
@@ -178,12 +180,19 @@ public class Movement : MonoBehaviour
             {
                 verticalVelocity = Mathf.Sqrt(jumpHeight * gravity);
             }
+            if(Input.GetButtonDown("Jump") && controller.isGrounded)
+            {
+            if (anim != null) anim.SetTrigger("Jump");
+        
+            }
         }
         else
         {
             verticalVelocity -= gravity * Time.deltaTime;
         }
         return verticalVelocity;
+
+
     }
     
 
