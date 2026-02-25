@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEditor.ShaderGraph.Internal;
@@ -17,7 +18,7 @@ public class Movement : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float turnSpeed = 5f;
-    [SerializeField] private float gravity = 7.81f;
+    [SerializeField] private float gravity = 4.81f;
     [SerializeField] private float jumpHeight = 0.4f;
     [SerializeField] private float sprintSpeed = 10f;
     [SerializeField] private float sprintTransitSpeed = 5f;
@@ -53,10 +54,11 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
+        Grounded = controller.isGrounded;
+
         InputManagement();
         TheMovement();
         Turn();
-        VerticalForceCalc();
 
         AnimationManagement();
     }
@@ -86,6 +88,10 @@ public class Movement : MonoBehaviour
         anim.SetBool("isCrouching",isCrouching);
         anim.SetBool("isSliding", isSliding);
         anim.SetBool("Grounded", Grounded);
+
+
+        float speedAnimator = Grounded ? 0f : verticalVelocity;
+        anim.SetFloat("yVelocity", speedAnimator);
     }
 
     private void TheMovement()
@@ -104,32 +110,64 @@ public class Movement : MonoBehaviour
         Vector3 move = new Vector3(turnInput, 0, moveInput);
         move = followCam.transform.TransformDirection(move);
 
-        move.y = VerticalForceCalc();
+        move.y = 0f;
 
-        if (Input.GetKey(KeyCode.LeftShift))
+        float targetSpeed;
+        if (isCrouching)
         {
-            speed = Mathf.Lerp(speed, sprintSpeed, sprintTransitSpeed * Time.deltaTime);
+            targetSpeed = crouchSpeed;
+        }
+        else if(Input.GetKey(KeyCode.LeftShift))
+        {
+            targetSpeed = sprintSpeed;           
         }
         else
         {
-            speed = Mathf.Lerp(speed, walkSpeed, sprintTransitSpeed * Time.deltaTime);
+            targetSpeed = walkSpeed;
         }
 
-        float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
+        speed = Mathf.Lerp(speed, targetSpeed, sprintTransitSpeed*Time.deltaTime);
 
         move *= speed;
-        controller.Move(move * Time.deltaTime);
+
+        move.y = VerticalForceCalc();
+
+        controller.Move(move*Time.deltaTime);
+
+        // if (Input.GetKey(KeyCode.LeftShift))
+        // {
+        //     speed = Mathf.Lerp(speed, sprintSpeed, sprintTransitSpeed * Time.deltaTime);
+        // }
+        // else
+        // {
+        //     speed = Mathf.Lerp(speed, walkSpeed, sprintTransitSpeed * Time.deltaTime);
+        // }
+
+        // float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
+
+        // move *= speed;
+        // controller.Move(move * Time.deltaTime);
     }
 
     private void HandleSlide()
     {
-        controller.Move(slideDirection * currentSlideSpeed * Time.deltaTime);
+        Vector3 slideMove = slideDirection * currentSlideSpeed;
+        slideMove.y = VerticalForceCalc();
+
+        controller.Move(slideMove * Time.deltaTime);
         currentSlideSpeed -= slideDecayRate * Time.deltaTime;
 
         if (currentSlideSpeed <= crouchSpeed)
         {
             isSliding = false;
         }
+        // controller.Move(slideDirection * currentSlideSpeed * Time.deltaTime);
+        // currentSlideSpeed -= slideDecayRate * Time.deltaTime;
+
+        // if (currentSlideSpeed <= crouchSpeed)
+        // {
+        //     isSliding = false;
+        // }
     }
 
     private void StartCrouchOrSlide()
@@ -162,29 +200,35 @@ public class Movement : MonoBehaviour
             Vector3 currentLookDirection = controller.velocity.normalized;
             currentLookDirection.y = 0;
 
-            currentLookDirection.Normalize();
+            if (currentLookDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
+            }
+            // currentLookDirection.Normalize();
 
-            Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
+            // Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
-            Time.deltaTime * turnSpeed);
+            // transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
+            // Time.deltaTime * turnSpeed);
         }
     }
 
     private float VerticalForceCalc()
     {
-        if (controller.isGrounded)
+        if (Grounded)
         {
-            verticalVelocity = -1;
+            verticalVelocity = -2;
             if (Input.GetButtonDown("Jump"))
             {
-                verticalVelocity = Mathf.Sqrt(jumpHeight * gravity);
+                verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
+                if (anim != null) anim.SetTrigger("Jump");
             }
-            if(Input.GetButtonDown("Jump") && controller.isGrounded)
-            {
-            if (anim != null) anim.SetTrigger("Jump");
+            // if(Input.GetButtonDown("Jump") && controller.isGrounded)
+            // {
+            // if (anim != null) anim.SetTrigger("Jump");
         
-            }
+            // }
         }
         else
         {
