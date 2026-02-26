@@ -1,11 +1,7 @@
 using System;
-using System.Runtime.CompilerServices;
-using NUnit.Framework;
-using Unity.Mathematics;
 using Unity.VisualScripting;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
-using UnityEngine.Rendering;
+
 
 public class Movement : MonoBehaviour
 {
@@ -18,8 +14,8 @@ public class Movement : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float turnSpeed = 5f;
-    [SerializeField] private float gravity = 4.81f;
-    [SerializeField] private float jumpHeight = 0.4f;
+    [SerializeField] private float gravity = 2.81f;
+    [SerializeField] private float jumpHeight = 2.5f;
     [SerializeField] private float sprintSpeed = 10f;
     [SerializeField] private float sprintTransitSpeed = 5f;
 
@@ -29,6 +25,12 @@ public class Movement : MonoBehaviour
     [SerializeField] private float slideDecayRate = 10f; 
     [SerializeField] private float normalHeight = 2f;
     [SerializeField] private float crouchHeight = 1f;
+
+    [Space]
+    [Header ("Ground Check")]
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundDistance = 0.4f;
+    [SerializeField] private LayerMask groundMask;
 
     private float verticalVelocity;
     private float speed;
@@ -41,6 +43,7 @@ public class Movement : MonoBehaviour
     private bool isCrouching;
     private bool isSliding;
     private bool Grounded;
+    private bool isRunning;
     private float currentSlideSpeed;
     private Vector3 slideDirection;
     
@@ -54,7 +57,7 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
-        Grounded = controller.isGrounded;
+        Grounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
         InputManagement();
         TheMovement();
@@ -76,7 +79,17 @@ public class Movement : MonoBehaviour
         {
             StopCrouch();
         }
+
+        if (Input.GetButtonDown("Jump") || Input.GetKey(KeyCode.PageDown))
+        {
+            PerformJump();
+        }
     }
+        private void PerformJump()
+        {
+            verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
+            if (anim != null) anim.SetTrigger("Jump");
+        }    
     
     private void AnimationManagement()
     {
@@ -84,11 +97,27 @@ public class Movement : MonoBehaviour
 
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
 
-        anim.SetBool("isMoving",isMoving);
+        isRunning = isMoving && Input.GetKey(KeyCode.LeftShift) && !isCrouching && Grounded;
+
+        if (isRunning)
+        {
+            Debug.Log("WE ARE RUNNING!");
+        }
+
+        if (Grounded)
+        {
+            Debug.Log("On The Ground, Boss");
+        }
+
+        if (isCrouching)
+        {
+            Debug.Log("SITTED");
+        }
+        anim.SetBool("isMoving", isMoving);
         anim.SetBool("isCrouching",isCrouching);
         anim.SetBool("isSliding", isSliding);
         anim.SetBool("Grounded", Grounded);
-
+        anim.SetBool("isRunning", isRunning);
 
         float speedAnimator = Grounded ? 0f : verticalVelocity;
         anim.SetFloat("yVelocity", speedAnimator);
@@ -117,7 +146,7 @@ public class Movement : MonoBehaviour
         {
             targetSpeed = crouchSpeed;
         }
-        else if(Input.GetKey(KeyCode.LeftShift))
+        else if(isRunning)
         {
             targetSpeed = sprintSpeed;           
         }
@@ -177,7 +206,17 @@ public class Movement : MonoBehaviour
         controller.height = crouchHeight;
         controller.center = new Vector3(0, crouchHeight / 2f, 0);
 
-        if (Mathf.Abs(moveInput) > 0.1f || MathF.Abs(turnInput) > 0.1f)
+        // if (Mathf.Abs(moveInput) > 0.1f || MathF.Abs(turnInput) > 0.1f)
+        // {
+        //     isSliding = true;
+        //     currentSlideSpeed = slideInitialSpeed;
+        //     slideDirection = transform.forward;
+        // }
+
+
+        bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
+        
+        if(isMoving && Input.GetKey(KeyCode.LeftShift) && Grounded)
         {
             isSliding = true;
             currentSlideSpeed = slideInitialSpeed;
@@ -216,30 +255,23 @@ public class Movement : MonoBehaviour
 
     private float VerticalForceCalc()
     {
-        if (Grounded)
+        if (Grounded && verticalVelocity <= 0f)
         {
-            verticalVelocity = -2;
-            if (Input.GetButtonDown("Jump"))
-            {
-                verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
-                if (anim != null) anim.SetTrigger("Jump");
-            }
-            // if(Input.GetButtonDown("Jump") && controller.isGrounded)
-            // {
-            // if (anim != null) anim.SetTrigger("Jump");
-        
-            // }
+            verticalVelocity = -10f;
+
         }
         else
         {
             verticalVelocity -= gravity * Time.deltaTime;
+
+            if (verticalVelocity < -5f)
+            {
+                verticalVelocity = -3f;
+            }
         }
+
         return verticalVelocity;
-
-
     }
-    
-
 }
 
 
