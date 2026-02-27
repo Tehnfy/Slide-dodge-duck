@@ -18,7 +18,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private float jumpHeight = 2.5f;
     [SerializeField] private float sprintSpeed = 10f;
     [SerializeField] private float sprintTransitSpeed = 5f;
-
+    [Space]
     [Header ("Crouch Settings")]
     [SerializeField] private float crouchSpeed = 2f;
     [SerializeField] private float slideInitialSpeed = 12f;
@@ -27,10 +27,15 @@ public class Movement : MonoBehaviour
     [SerializeField] private float crouchHeight = 1f;
 
     [Space]
-    [Header ("Ground Check")]
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundDistance = 0.4f;
+    [Header ("Jump Tuck")]
+    [SerializeField] private float airborneHeight = 1.2f;
+    [SerializeField] private float airborneCenterY = 1.4f;
+
+
+    [Space]
+    [Header("Ground Check")]
     [SerializeField] private LayerMask groundMask;
+    [SerializeField] private float groundCheckOffset = 0.1f;
 
     private float verticalVelocity;
     private float speed;
@@ -39,14 +44,17 @@ public class Movement : MonoBehaviour
     [Header ("Input")]
     private float moveInput;
     private float turnInput;
+
+    [Space]
     [Header("State Tarckers")]
     private bool isCrouching;
     private bool isSliding;
     private bool Grounded;
     private bool isRunning;
+    private bool isJumping;
+    private bool wasGrounded;    
     private float currentSlideSpeed;
     private Vector3 slideDirection;
-    
 
     void Start()
     {
@@ -57,10 +65,32 @@ public class Movement : MonoBehaviour
 
     private void Update()
     {
-        Grounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        wasGrounded = Grounded; 
+
+        float radius = controller.radius * 0.9f;
+        Vector3 origin = transform.position + controller.center;
+
+        float maxDistance = controller.center.y - radius + groundCheckOffset;
+
+        Grounded = Physics.SphereCast(origin, radius, Vector3.down, out RaycastHit hit, maxDistance, groundMask);
+
+        if (verticalVelocity > 0f)
+        {
+            Grounded = false;
+        }
+        
+        if(Grounded && !wasGrounded && verticalVelocity <= 0)
+        {
+            float floorY = origin.y - hit.distance - radius;
+
+            controller.enabled = false;
+            transform.position = new Vector3(transform.position.x, floorY, transform.position.z);
+            controller.enabled = true;
+        }
 
         InputManagement();
         TheMovement();
+        ColliderManager();
         Turn();
 
         AnimationManagement();
@@ -80,16 +110,18 @@ public class Movement : MonoBehaviour
             StopCrouch();
         }
 
-        if (Input.GetButtonDown("Jump") || Input.GetKey(KeyCode.PageDown))
+        if (Input.GetButtonDown("Jump") && Grounded && !isJumping)
         {
             PerformJump();
         }
     }
         private void PerformJump()
-        {
-            verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
-            if (anim != null) anim.SetTrigger("Jump");
-        }    
+    {
+        isJumping = true; 
+
+        verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
+        if (anim != null) anim.SetTrigger("Jump");
+    }    
     
     private void AnimationManagement()
     {
@@ -162,20 +194,6 @@ public class Movement : MonoBehaviour
         move.y = VerticalForceCalc();
 
         controller.Move(move*Time.deltaTime);
-
-        // if (Input.GetKey(KeyCode.LeftShift))
-        // {
-        //     speed = Mathf.Lerp(speed, sprintSpeed, sprintTransitSpeed * Time.deltaTime);
-        // }
-        // else
-        // {
-        //     speed = Mathf.Lerp(speed, walkSpeed, sprintTransitSpeed * Time.deltaTime);
-        // }
-
-        // float currentSpeed = isCrouching ? crouchSpeed : walkSpeed;
-
-        // move *= speed;
-        // controller.Move(move * Time.deltaTime);
     }
 
     private void HandleSlide()
@@ -190,29 +208,11 @@ public class Movement : MonoBehaviour
         {
             isSliding = false;
         }
-        // controller.Move(slideDirection * currentSlideSpeed * Time.deltaTime);
-        // currentSlideSpeed -= slideDecayRate * Time.deltaTime;
-
-        // if (currentSlideSpeed <= crouchSpeed)
-        // {
-        //     isSliding = false;
-        // }
     }
 
     private void StartCrouchOrSlide()
     {
         isCrouching = true;
-
-        controller.height = crouchHeight;
-        controller.center = new Vector3(0, crouchHeight / 2f, 0);
-
-        // if (Mathf.Abs(moveInput) > 0.1f || MathF.Abs(turnInput) > 0.1f)
-        // {
-        //     isSliding = true;
-        //     currentSlideSpeed = slideInitialSpeed;
-        //     slideDirection = transform.forward;
-        // }
-
 
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
         
@@ -228,9 +228,6 @@ public class Movement : MonoBehaviour
     {
         isCrouching = false;
         isSliding = false;
-
-        controller.height = normalHeight;
-        controller.center = new Vector3(0, normalHeight / 2f, 0);
     }
     private void Turn()
     {
@@ -258,7 +255,7 @@ public class Movement : MonoBehaviour
         if (Grounded && verticalVelocity <= 0f)
         {
             verticalVelocity = -10f;
-
+            isJumping = false;
         }
         else
         {
@@ -271,6 +268,26 @@ public class Movement : MonoBehaviour
         }
 
         return verticalVelocity;
+    }
+
+    private void ColliderManager()
+    {
+        if (isCrouching || isSliding)
+        {
+            controller.height = crouchHeight;
+            controller.center = new Vector3(0, crouchHeight / 2f, 0);
+        }
+        else if (!Grounded)
+        {
+            controller.height = airborneHeight;
+            controller.center = new Vector3(0, airborneCenterY, 0);
+        }
+        else
+        {
+            controller.height = normalHeight;
+            controller.center = new Vector3(0, normalHeight / 2f, 0);
+        }
+        
     }
 }
 
