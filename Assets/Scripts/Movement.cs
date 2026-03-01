@@ -1,6 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 
 public class Movement : MonoBehaviour
@@ -31,6 +32,10 @@ public class Movement : MonoBehaviour
     [SerializeField] private float airborneHeight = 1.2f;
     [SerializeField] private float airborneCenterY = 1.4f;
 
+    [Space]
+    [Header ("Turn Settings")]
+    [SerializeField] private float turnSmoothTime = 0.1f;
+    private float turnSmoothVelocity; 
 
     [Space]
     [Header("Ground Check")]
@@ -91,7 +96,6 @@ public class Movement : MonoBehaviour
         InputManagement();
         TheMovement();
         ColliderManager();
-        Turn();
 
         AnimationManagement();
     }
@@ -157,14 +161,41 @@ public class Movement : MonoBehaviour
 
     private void TheMovement()
     {
-        if (isSliding)
         {
-            HandleSlide();
-        }
-        else
+            
+        float targetSpeed;
+        if (isCrouching) targetSpeed = crouchSpeed;
+        else if(isRunning) targetSpeed = sprintSpeed;           
+        else targetSpeed = walkSpeed;
+
+        speed = Mathf.Lerp(speed, targetSpeed, sprintTransitSpeed * Time.deltaTime);
+
+        Vector3 inputDirection = new Vector3(turnInput, 0f, moveInput).normalized;
+        Vector3 moveDir = Vector3.zero;
+
+        if (inputDirection.magnitude >= 0.1f)
         {
-        GroundMovement();
+            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + followCam.eulerAngles.y;
+            
+            float smoothedAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, smoothedAngle, 0f);
+
+            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
         }
+
+        Vector3 finalMove = moveDir * speed;
+        finalMove.y = VerticalForceCalc();
+
+        controller.Move(finalMove * Time.deltaTime);
+    }
+        // if (isSliding)
+        // {
+        //     HandleSlide();
+        // }
+        // else
+        // {
+        // GroundMovement();
+        // }
     }
     private void GroundMovement()
     {
@@ -229,26 +260,17 @@ public class Movement : MonoBehaviour
         isCrouching = false;
         isSliding = false;
     }
-    private void Turn()
-    {
-        if (Mathf.Abs(turnInput) > 0.1f || Mathf.Abs(moveInput) > 0.1f)
-        {
-            Vector3 currentLookDirection = controller.velocity.normalized;
-            currentLookDirection.y = 0;
+    // private void Turn()
+    // {
+    //     if (Mathf.Abs(turnInput) > 0.1f || Mathf.Abs(moveInput) > 0.1f)
+    //     {
+    //         float targetAngle = Mathf.Atan2(turnInput, moveInput) * Mathf.Rad2Deg + followCam.transform.eulerAngles.y;
 
-            if (currentLookDirection != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
-            }
-            // currentLookDirection.Normalize();
+    //         float smoothedAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
 
-            // Quaternion targetRotation = Quaternion.LookRotation(currentLookDirection);
-
-            // transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
-            // Time.deltaTime * turnSpeed);
-        }
-    }
+    //         transform.rotation = Quaternion.Euler(0f, smoothedAngle, 0f);
+    //     }
+    // }
 
     private float VerticalForceCalc()
     {
@@ -272,15 +294,15 @@ public class Movement : MonoBehaviour
 
     private void ColliderManager()
     {
-        if (isCrouching || isSliding)
-        {
-            controller.height = crouchHeight;
-            controller.center = new Vector3(0, crouchHeight / 2f, 0);
-        }
-        else if (!Grounded)
+         if (!Grounded)
         {
             controller.height = airborneHeight;
             controller.center = new Vector3(0, airborneCenterY, 0);
+        }
+        else if (isCrouching || isSliding)
+        {
+            controller.height = crouchHeight;
+            controller.center = new Vector3(0, crouchHeight / 2f, 0);
         }
         else
         {
