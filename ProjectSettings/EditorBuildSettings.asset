@@ -21,7 +21,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Reset_Scene.unity
     guid: e71c9ea7ba314b24d8d0b66129df38d2
   - enabled: 1
-    path: Assets/Scenes/Level_1.unity
+    path: Assets/Scenes/PlayGround_Level.unity
     guid: 43aaa27304d824644810d40428a277ee
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

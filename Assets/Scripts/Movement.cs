@@ -1,7 +1,13 @@
 using System;
+using System.Numerics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Vector3 = UnityEngine.Vector3;
+using Quaternion = UnityEngine.Quaternion;
+using Unity.Cinemachine;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 
 public class Movement : MonoBehaviour
@@ -31,6 +37,10 @@ public class Movement : MonoBehaviour
     [Header ("Jump Tuck")]
     [SerializeField] private float airborneHeight = 1.2f;
     [SerializeField] private float airborneCenterY = 1.4f;
+    [Space]
+    [Header("Jump Forgiveness")]
+    [SerializeField] private float jumpBufferTime = 0.2f;
+    private float jumpBufferCounter;
 
     [Space]
     [Header ("Turn Settings")]
@@ -42,6 +52,14 @@ public class Movement : MonoBehaviour
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundCheckOffset = 0.1f;
 
+    [Space]
+    [Header("Dynamic Camera Zoom")]
+    [SerializeField] private CinemachineCamera virtualCam; 
+    [SerializeField] private float normalCamRadius = 3f;   
+    [SerializeField] private float pullBackCamRadius = 6f; 
+    [SerializeField] private float cameraZoomSpeed = 2f;  
+    
+    private CinemachineOrbitalFollow orbitalFollow;
     private float verticalVelocity;
     private float speed;
 
@@ -64,8 +82,12 @@ public class Movement : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        if (anim == null) anim = GetComponent<Animator>();
 
-        if(anim == null) anim = GetComponent<Animator>();
+        if (orbitalFollow == null)
+        {
+            orbitalFollow = virtualCam.GetComponent<CinemachineOrbitalFollow>();
+        }
     }
 
     private void Update()
@@ -95,10 +117,11 @@ public class Movement : MonoBehaviour
 
         InputManagement();
         TheMovement();
-        ColliderManager();
+        DynamicCameraZoom();
 
+        ColliderManager();
         AnimationManagement();
-    }
+        }
     private void InputManagement()
     {
         moveInput = Input.GetAxisRaw("Vertical");
@@ -117,6 +140,20 @@ public class Movement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && Grounded && !isJumping)
         {
             PerformJump();
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            jumpBufferCounter = jumpBufferTime;
+        }
+        else
+        {
+            jumpBufferCounter -= Time.deltaTime;
+        }
+        if (jumpBufferCounter > 0f && !isJumping)
+        {
+            PerformJump();
+            jumpBufferCounter = 0f;
         }
     }
         private void PerformJump()
@@ -161,49 +198,23 @@ public class Movement : MonoBehaviour
 
     private void TheMovement()
     {
+        Vector3 finalMove = Vector3.zero;
+        if (isSliding)
         {
-            
-        float targetSpeed;
-        if (isCrouching) targetSpeed = crouchSpeed;
-        else if(isRunning) targetSpeed = sprintSpeed;           
-        else targetSpeed = walkSpeed;
-
-        speed = Mathf.Lerp(speed, targetSpeed, sprintTransitSpeed * Time.deltaTime);
-
-        Vector3 inputDirection = new Vector3(turnInput, 0f, moveInput).normalized;
-        Vector3 moveDir = Vector3.zero;
-
-        if (inputDirection.magnitude >= 0.1f)
+            finalMove = HandleSlide();
+        }
+        else
         {
-            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + followCam.eulerAngles.y;
-            
-            float smoothedAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, smoothedAngle, 0f);
-
-            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            finalMove = GroundMovement();
         }
 
-        Vector3 finalMove = moveDir * speed;
         finalMove.y = VerticalForceCalc();
-
         controller.Move(finalMove * Time.deltaTime);
     }
-        // if (isSliding)
-        // {
-        //     HandleSlide();
-        // }
-        // else
-        // {
-        // GroundMovement();
-        // }
-    }
-    private void GroundMovement()
+    
+
+    private Vector3 GroundMovement()
     {
-        Vector3 move = new Vector3(turnInput, 0, moveInput);
-        move = followCam.transform.TransformDirection(move);
-
-        move.y = 0f;
-
         float targetSpeed;
         if (isCrouching)
         {
@@ -218,27 +229,35 @@ public class Movement : MonoBehaviour
             targetSpeed = walkSpeed;
         }
 
-        speed = Mathf.Lerp(speed, targetSpeed, sprintTransitSpeed*Time.deltaTime);
+        speed = Mathf.Lerp(speed, targetSpeed, sprintTransitSpeed * Time.deltaTime);
 
-        move *= speed;
+        Vector3 inputDirection = new Vector3(turnInput, 0f, moveInput).normalized;
+        Vector3 moveDir = Vector3.zero;
 
-        move.y = VerticalForceCalc();
+        if (inputDirection.magnitude >= 0.1f)
+        {
+            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + followCam.eulerAngles.y;
 
-        controller.Move(move*Time.deltaTime);
+            float smoothedAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, smoothedAngle, 0f);
+
+            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+        }
+
+        return moveDir * speed;
     }
 
-    private void HandleSlide()
+    private Vector3 HandleSlide()
     {
         Vector3 slideMove = slideDirection * currentSlideSpeed;
-        slideMove.y = VerticalForceCalc();
-
-        controller.Move(slideMove * Time.deltaTime);
         currentSlideSpeed -= slideDecayRate * Time.deltaTime;
 
         if (currentSlideSpeed <= crouchSpeed)
         {
             isSliding = false;
         }
+
+        return slideMove;
     }
 
     private void StartCrouchOrSlide()
@@ -260,18 +279,6 @@ public class Movement : MonoBehaviour
         isCrouching = false;
         isSliding = false;
     }
-    // private void Turn()
-    // {
-    //     if (Mathf.Abs(turnInput) > 0.1f || Mathf.Abs(moveInput) > 0.1f)
-    //     {
-    //         float targetAngle = Mathf.Atan2(turnInput, moveInput) * Mathf.Rad2Deg + followCam.transform.eulerAngles.y;
-
-    //         float smoothedAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-
-    //         transform.rotation = Quaternion.Euler(0f, smoothedAngle, 0f);
-    //     }
-    // }
-
     private float VerticalForceCalc()
     {
         if (Grounded && verticalVelocity <= 0f)
@@ -294,7 +301,7 @@ public class Movement : MonoBehaviour
 
     private void ColliderManager()
     {
-         if (!Grounded)
+        if (!Grounded)
         {
             controller.height = airborneHeight;
             controller.center = new Vector3(0, airborneCenterY, 0);
@@ -309,7 +316,30 @@ public class Movement : MonoBehaviour
             controller.height = normalHeight;
             controller.center = new Vector3(0, normalHeight / 2f, 0);
         }
-        
+
+    }
+
+    private void DynamicCameraZoom()
+    {
+        if (orbitalFollow == null)
+        {
+            Debug.LogWarning("Camera Zoom: Orbital Follow component is missing or not assigned!");
+            return;
+        }
+
+        bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(moveInput) > 0.1f;
+
+        float viewAngle = Vector3.Dot(transform.forward, followCam.forward);
+
+        if(isMoving && viewAngle < -0.2f)
+        {
+            Debug.Log("Camera Zoom: Player is running AT the camera! Expanding radius...");
+            orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, pullBackCamRadius, Time.deltaTime * cameraZoomSpeed);
+        }
+        else
+        {
+            orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, normalCamRadius, Time.deltaTime*cameraZoomSpeed);
+        }
     }
 }
 
