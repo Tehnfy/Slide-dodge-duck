@@ -27,9 +27,9 @@ public class Movement : MonoBehaviour
     [SerializeField] private float sprintTransitSpeed = 5f;
     [Space]
     [Header ("Crouch Settings")]
-    [SerializeField] private float crouchSpeed = 2f;
-    [SerializeField] private float slideInitialSpeed = 12f;
-    [SerializeField] private float slideDecayRate = 10f; 
+    [SerializeField] private float crouchSpeed = 1f;
+    [SerializeField] private float slideInitialSpeed = 6f;
+    [SerializeField] private float slideDecayRate = 1f; 
     [SerializeField] private float normalHeight = 2f;
     [SerializeField] private float crouchHeight = 1f;
 
@@ -333,7 +333,6 @@ public class Movement : MonoBehaviour
 
         if(isMoving && viewAngle < -0.2f)
         {
-            Debug.Log("Camera Zoom: Player is running AT the camera! Expanding radius...");
             orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, pullBackCamRadius, Time.deltaTime * cameraZoomSpeed);
         }
         else
