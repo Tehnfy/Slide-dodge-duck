@@ -24,7 +24,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private float gravity = 2.81f;
     [SerializeField] private float jumpHeight = 2.5f;
     [SerializeField] private float sprintSpeed = 10f;
-    [SerializeField] private float sprintTransitSpeed = 5f;
+    [SerializeField] private float sprintTransitSpeed = 3f;
     [Space]
     [Header ("Crouch Settings")]
     [SerializeField] private float crouchSpeed = 1f;
@@ -69,15 +69,23 @@ public class Movement : MonoBehaviour
     private float turnInput;
 
     [Space]
-    [Header("State Tarckers")]
+    [Header("State Trackers")]
     private bool isCrouching;
     private bool isSliding;
     private bool Grounded;
     private bool isRunning;
     private bool isJumping;
-    private bool wasGrounded;    
-    private float currentSlideSpeed;
-    private Vector3 slideDirection;
+    private bool wasGrounded;
+
+    [Space]
+    [Header("Slope Physics")]
+    [SerializeField] private float slideAcceleration = 12f;
+    [SerializeField] private float steepSlopeSlideSpeed = 5f;
+    private Vector3 groundNormal;
+    private float groundSlopeAngle;
+    private bool isOnSteepSlope;
+    private Vector3 slideVelocity;
+
 
     void Start()
     {
@@ -101,18 +109,17 @@ public class Movement : MonoBehaviour
 
         Grounded = Physics.SphereCast(origin, radius, Vector3.down, out RaycastHit hit, maxDistance, groundMask);
 
-        if (verticalVelocity > 0f)
+        if (Grounded)
         {
-            Grounded = false;
+            groundNormal = hit.normal;
+            groundSlopeAngle = Vector3.Angle(Vector3.up, groundNormal);
+            isOnSteepSlope = groundSlopeAngle > controller.slopeLimit; 
         }
-        
-        if(Grounded && !wasGrounded && verticalVelocity <= 0)
+        else
         {
-            float floorY = origin.y - hit.distance - radius;
-
-            controller.enabled = false;
-            transform.position = new Vector3(transform.position.x, floorY, transform.position.z);
-            controller.enabled = true;
+            groundNormal = Vector3.up;
+            groundSlopeAngle = 0f;
+            isOnSteepSlope = false;
         }
 
         InputManagement();
@@ -196,19 +203,42 @@ public class Movement : MonoBehaviour
         anim.SetFloat("yVelocity", speedAnimator);
     }
 
-    private void TheMovement()
+private void TheMovement()
     {
         Vector3 finalMove = Vector3.zero;
-        if (isSliding)
+        float gravityY = VerticalForceCalc(); 
+
+        if (isOnSteepSlope)
+        {
+            Vector3 steepDown = Vector3.ProjectOnPlane(Vector3.down, groundNormal).normalized;
+            finalMove = steepDown * steepSlopeSlideSpeed;
+            isSliding = false;
+
+            finalMove.y -= 2f;
+        }
+
+        else if (isSliding)
         {
             finalMove = HandleSlide();
+            if (Grounded) finalMove.y += gravityY;
         }
+
         else
         {
             finalMove = GroundMovement();
+
+            if (Grounded)
+            {
+                finalMove = Vector3.ProjectOnPlane(finalMove, groundNormal);
+                finalMove.y += gravityY;
+            }
         }
 
-        finalMove.y = VerticalForceCalc();
+        if (!Grounded)
+        {
+            finalMove.y = gravityY; 
+        }
+
         controller.Move(finalMove * Time.deltaTime);
     }
     
@@ -247,30 +277,50 @@ public class Movement : MonoBehaviour
         return moveDir * speed;
     }
 
-    private Vector3 HandleSlide()
+private Vector3 HandleSlide()
     {
-        Vector3 slideMove = slideDirection * currentSlideSpeed;
-        currentSlideSpeed -= slideDecayRate * Time.deltaTime;
+        Vector3 slopeDown = Vector3.ProjectOnPlane(Vector3.down, groundNormal).normalized;
 
-        if (currentSlideSpeed <= crouchSpeed)
+        if (groundSlopeAngle > 2f)
+        {
+            float slopeIntensity = groundSlopeAngle / controller.slopeLimit; 
+            slideVelocity += slopeDown * (slideAcceleration * slopeIntensity) * Time.deltaTime;
+        }
+        else
+        {
+            Vector3 friction = -slideVelocity.normalized * slideDecayRate * Time.deltaTime;
+            
+            if (friction.magnitude >= slideVelocity.magnitude) {
+                slideVelocity = Vector3.zero;
+            } else {
+                slideVelocity += friction;
+            }
+        }
+
+        if (slideVelocity.magnitude <= crouchSpeed && groundSlopeAngle <= 2f)
         {
             isSliding = false;
         }
 
-        return slideMove;
+        return slideVelocity;
     }
 
     private void StartCrouchOrSlide()
     {
         isCrouching = true;
-
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
-        
-        if(isMoving && Input.GetKey(KeyCode.LeftShift) && Grounded)
+
+        if (isMoving && Input.GetKey(KeyCode.LeftShift) && Grounded && !isOnSteepSlope)
         {
             isSliding = true;
-            currentSlideSpeed = slideInitialSpeed;
-            slideDirection = transform.forward;
+            slideVelocity = transform.forward * slideInitialSpeed;
+        }
+
+        else if (Grounded && groundSlopeAngle > 5f && !isOnSteepSlope)
+        {
+            isSliding = true;
+            Vector3 slopeDown = Vector3.ProjectOnPlane(Vector3.down, groundNormal).normalized;
+            slideVelocity = slopeDown * 2f;
         }
     }
     
@@ -279,20 +329,20 @@ public class Movement : MonoBehaviour
         isCrouching = false;
         isSliding = false;
     }
-    private float VerticalForceCalc()
+private float VerticalForceCalc()
     {
         if (Grounded && verticalVelocity <= 0f)
         {
-            verticalVelocity = -10f;
+            verticalVelocity = -2f; 
             isJumping = false;
         }
         else
         {
             verticalVelocity -= gravity * Time.deltaTime;
 
-            if (verticalVelocity < -5f)
+            if (verticalVelocity < -15f)
             {
-                verticalVelocity = -3f;
+                verticalVelocity = -15f;
             }
         }
 
@@ -331,15 +381,20 @@ public class Movement : MonoBehaviour
 
         float viewAngle = Vector3.Dot(transform.forward, followCam.forward);
 
-        if(isMoving && viewAngle < -0.2f)
+        if (isMoving && viewAngle < -0.2f)
         {
             orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, pullBackCamRadius, Time.deltaTime * cameraZoomSpeed);
         }
         else
         {
-            orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, normalCamRadius, Time.deltaTime*cameraZoomSpeed);
+            orbitalFollow.Radius = Mathf.Lerp(orbitalFollow.Radius, normalCamRadius, Time.deltaTime * cameraZoomSpeed);
         }
     }
+    public Vector3 GetSlideVelocity() { return slideVelocity; }
+    public float GetGroundAngle() { return groundSlopeAngle; }
+    public bool GetIsSliding() { return isSliding; }
+    public bool GetIsRunning() { return isRunning; }
+    public bool GetIsCrouching() { return isCrouching; }
 }
 
 
