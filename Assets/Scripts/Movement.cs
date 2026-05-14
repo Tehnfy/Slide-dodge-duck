@@ -204,12 +204,12 @@ public class Movement : MonoBehaviour
 
         if (isRunning)
         {
-            Debug.Log("WE ARE RUNNING!");
+           // Debug.Log("WE ARE RUNNING!");
         }
 
         if (Grounded)
         {
-            Debug.Log("On The Ground, Boss");
+            // Debug.Log("On The Ground, Boss");
         }
 
         if (isCrouching)
