@@ -2113,7 +2113,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &280857630
 Transform:
   m_ObjectHideFlags: 0
@@ -12396,6 +12396,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   followCam: {fileID: 306104716}
   anim: {fileID: 0}
+  cameraFraming: {fileID: 1280148996}
   walkSpeed: 4.5
   turnSpeed: 1
   gravity: 9.81
@@ -12410,15 +12411,13 @@ MonoBehaviour:
   airborneHeight: 1.2
   airborneCenterY: 1.4
   jumpBufferTime: 0.2
+  coyoteTime: 0.3
   turnSmoothTime: 0.1
   groundMask:
     serializedVersion: 2
     m_Bits: 64
   groundCheckOffset: 0.1
-  virtualCam: {fileID: 306104715}
-  normalCamRadius: 5
-  pullBackCamRadius: 10
-  cameraZoomSpeed: 4
+  colliderSmoothTime: 0.1
   slideAcceleration: 8
   steepSlopeSlideSpeed: 5
 --- !u!4 &1280148994 stripped
@@ -12439,6 +12438,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxMeterSpeed: 20
+--- !u!114 &1280148996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1280148989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 148ae2f9157dcb447a47d715a1405cbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  followCam: {fileID: 306104716}
+  virtualCam: {fileID: 306104715}
+  normalCamRadius: 5
+  pullBackCamRadius: 10
+  zoomSmoothTime: 0.5
+  cameraFollowTarget: {fileID: 0}
+  maxCraneHeight: 2.5
+  wallCheckDistance: 3
+  cameraObstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1001 &1280464643
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14056,6 +14078,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 335ecb99205eb4649adb2a6bb89ceaf3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1280148995}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 335ecb99205eb4649adb2a6bb89ceaf3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1280148996}
   m_SourcePrefab: {fileID: 100100000, guid: 335ecb99205eb4649adb2a6bb89ceaf3, type: 3}
 --- !u!1001 &1414155820
 PrefabInstance:
@@ -14375,7 +14400,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1447037004
 MonoBehaviour:
   m_ObjectHideFlags: 0

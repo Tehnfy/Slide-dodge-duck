@@ -16,6 +16,7 @@ public class Movement : MonoBehaviour
     private CharacterController controller;
     [SerializeField] private Transform followCam;
     [SerializeField] private Animator anim;
+    [SerializeField] private CameraFraming cameraFraming;
 
     [Space]
     [Header("Movement Settings")]
@@ -41,6 +42,8 @@ public class Movement : MonoBehaviour
     [Header("Jump Forgiveness")]
     [SerializeField] private float jumpBufferTime = 0.2f;
     private float jumpBufferCounter;
+    [SerializeField] private float coyoteTime = 0.3f;
+    private float coyoteTimeCounter;
 
     [Space]
     [Header ("Turn Settings")]
@@ -53,30 +56,11 @@ public class Movement : MonoBehaviour
     [SerializeField] private float groundCheckOffset = 0.1f;
 
     [Space]
-    [Header("Dynamic Camera Zoom")]
-    [SerializeField] private CinemachineCamera virtualCam; 
-    [SerializeField] private float normalCamRadius = 3f;   
-    [SerializeField] private float pullBackCamRadius = 6f;
-    [SerializeField] private float zoomSmoothTime = 0.5f;
-    private float zoomVelocity;
-    
-    [Space]
-    [Header("Wall Collision Crane")]
-    [SerializeField] private Transform cameraFollowTarget; 
-    [SerializeField] private float maxCraneHeight = 2.5f;
-    [SerializeField] private float wallCheckDistance = 3f;
-    [SerializeField] private LayerMask cameraObstacleMask; 
-    
-    [Space]
     [Header("Collider Smoothing")]
     [SerializeField] private float colliderSmoothTime = 0.1f;
     private float heightVelocity;
     private float centerYVelocity;
-    
-    private float defaultTargetY;
-    private float craneVelocity;
-    
-    private CinemachineOrbitalFollow orbitalFollow;
+
     private float verticalVelocity;
     private float speed;
 
@@ -108,16 +92,7 @@ public class Movement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         if (anim == null) anim = GetComponent<Animator>();
-
-        if (orbitalFollow == null)
-        {
-            orbitalFollow = virtualCam.GetComponent<CinemachineOrbitalFollow>();
-        }
-
-        if (cameraFollowTarget != null)
-        {
-            defaultTargetY = cameraFollowTarget.localPosition.y;
-        } 
+        if (cameraFraming == null) cameraFraming = GetComponent<CameraFraming>();
     }
 
     private void Update()
@@ -144,10 +119,21 @@ public class Movement : MonoBehaviour
             isOnSteepSlope = false;
         }
 
+        if (Grounded)
+        {
+            coyoteTimeCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime;
+        }
+
         InputManagement();
         TheMovement();
-        DynamicCameraZoom();
-        CameraCraneManager();
+
+        bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
+        cameraFraming.UpdateZoom(isMoving);
+        cameraFraming.UpdateCrane();
 
         ColliderManager();
         AnimationManagement();
@@ -167,9 +153,10 @@ public class Movement : MonoBehaviour
             StopCrouch();
         }
 
-        if (Input.GetButtonDown("Jump") && Grounded && !isJumping)
+        if (Input.GetButtonDown("Jump") && coyoteTimeCounter > 0f && !isJumping)
         {
             PerformJump();
+            coyoteTimeCounter = 0f;
         }
 
         if (Input.GetButtonDown("Jump"))
@@ -180,7 +167,7 @@ public class Movement : MonoBehaviour
         {
             jumpBufferCounter -= Time.deltaTime;
         }
-        if (jumpBufferCounter > 0f && !isJumping)
+        if (jumpBufferCounter > 0f && Grounded && !isJumping)
         {
             PerformJump();
             jumpBufferCounter = 0f;
@@ -330,6 +317,8 @@ private Vector3 HandleSlide()
 
     private void StartCrouchOrSlide()
     {
+        if (!Grounded) return;
+
         isCrouching = true;
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
 
@@ -408,54 +397,6 @@ private float VerticalForceCalc()
         controller.center = new Vector3(0, smoothedCenterY, 0);
     }
 
-    private void DynamicCameraZoom()
-    {
-        if (orbitalFollow == null)
-        {
-            Debug.LogWarning("Camera Zoom: Orbital Follow component is missing or not assigned!");
-            return;
-        }
-
-        bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
-
-        float viewAngle = Vector3.Dot(transform.forward, followCam.forward);
-
-        float targetRadius;
-        if (isMoving && viewAngle < -0.2f)
-        {
-            targetRadius = pullBackCamRadius;
-        }
-        else
-        {
-            targetRadius = normalCamRadius;
-        }
-
-        orbitalFollow.Radius = Mathf.SmoothDamp(orbitalFollow.Radius, targetRadius, ref zoomVelocity, zoomSmoothTime);
-    }
-
-    private void CameraCraneManager()
-    {
-        if (cameraFollowTarget == null) return;
-
-        Vector3 flatCameraPos = new Vector3(followCam.position.x, transform.position.y, followCam.position.z);
-        Vector3 flatDirectionToCamera = (flatCameraPos - transform.position).normalized;
-
-        Vector3 rayOrigin = transform.position + new Vector3(0, defaultTargetY, 0);
-        float targetY = defaultTargetY;
-
-        if (Physics.Raycast(rayOrigin, flatDirectionToCamera, out RaycastHit hit, wallCheckDistance, cameraObstacleMask))
-        {
-            float squishPercent = 1f - (hit.distance / wallCheckDistance);
-            targetY = defaultTargetY + (maxCraneHeight * squishPercent);
-        }
-
-        float smoothedY = Mathf.SmoothDamp(cameraFollowTarget.localPosition.y, targetY, ref craneVelocity, 0.2f);
-
-        cameraFollowTarget.localPosition = new Vector3(0, smoothedY, 0);
-
-    }
-    
-    
     public Vector3 GetSlideVelocity() { return slideVelocity; }
     public float GetGroundAngle() { return groundSlopeAngle; }
     public bool GetIsSliding() { return isSliding; }
