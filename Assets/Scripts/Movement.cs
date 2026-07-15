@@ -30,6 +30,7 @@ public class Movement : MonoBehaviour
     [Header ("Crouch Settings")]
     [SerializeField] private float crouchSpeed = 1f;
     [SerializeField] private float slideInitialSpeed = 6f;
+    [SerializeField] private float slideMinSpeed = 7f;
     [SerializeField] private float slideDecayRate = 1f; 
     [SerializeField] private float normalHeight = 2f;
     [SerializeField] private float crouchHeight = 1f;
@@ -54,6 +55,10 @@ public class Movement : MonoBehaviour
     [Header("Ground Check")]
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundCheckOffset = 0.1f;
+    [SerializeField] private float hazardProbeDepth = 3f;
+    [SerializeField] private float hazardProbeRadius = 0.15f;
+    private int hazardMask;
+    private bool overHazard;
 
     [Space]
     [Header("Collider Smoothing")]
@@ -93,6 +98,15 @@ public class Movement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         if (anim == null) anim = GetComponent<Animator>();
         if (cameraFraming == null) cameraFraming = GetComponent<CameraFraming>();
+
+        // Position is fully script-driven through the CharacterController. The
+        // jump/fall clips carry baked root-Y motion which, when applied, moves
+        // the transform directly - bypassing collision - and can push the player
+        // through the floor. Done in code so both scenes get it.
+        if (anim != null) anim.applyRootMotion = false;
+
+        // Resolved by name so no per-scene mask wiring is needed.
+        hazardMask = LayerMask.GetMask("VOID");
     }
 
     private void Update()
@@ -104,7 +118,16 @@ public class Movement : MonoBehaviour
 
         float maxDistance = controller.center.y - radius + groundCheckOffset;
 
-        Grounded = Physics.SphereCast(origin, radius, Vector3.down, out RaycastHit hit, maxDistance, groundMask);
+        // Ignore triggers: hazard volumes (e.g. VOID fall zones) are trigger
+        // colliders and must never count as jumpable ground.
+        Grounded = Physics.SphereCast(origin, radius, Vector3.down, out RaycastHit hit, maxDistance, groundMask, QueryTriggerInteraction.Ignore);
+
+        // During the first frames of a jump's ascent the character hasn't risen
+        // past the sphere-cast offset yet (at high framerates: ~5cm/frame vs 10cm
+        // offset), so the cast still reports the floor. Treat ascent as airborne,
+        // otherwise the stale 'grounded' redirects the Animator's jump transition
+        // back to Idle and refreshes coyote time mid-jump.
+        if (isJumping && verticalVelocity > 0f) Grounded = false;
 
         if (Grounded)
         {
@@ -122,11 +145,27 @@ public class Movement : MonoBehaviour
         if (Grounded)
         {
             coyoteTimeCounter = coyoteTime;
+
+            // Reset before InputManagement() so a buffered jump can fire on the
+            // landing frame itself instead of one frame late (VerticalForceCalc's
+            // reset runs after input). vVel guard: ascent frames can still graze
+            // the ground with the sphere cast.
+            if (verticalVelocity <= 0f) isJumping = false;
         }
         else
         {
             coyoteTimeCounter -= Time.deltaTime;
         }
+
+        // Fall zones must always suck the player in: sense whether the nearest
+        // thing below is a hazard trigger rather than ground, and if so block
+        // every jump path (grounded press, coyote, buffered) via PerformJump.
+        // Thin probe radius keeps jumps fair right at a zone's edge; distant
+        // catch-all void volumes are beyond the probe depth, so ledge coyote
+        // jumps still work.
+        overHazard = Physics.SphereCast(origin, hazardProbeRadius, Vector3.down, out RaycastHit hazardHit, hazardProbeDepth, groundMask | hazardMask, QueryTriggerInteraction.Collide)
+                     && ((1 << hazardHit.collider.gameObject.layer) & hazardMask) != 0;
+        if (overHazard) coyoteTimeCounter = 0f;
 
         InputManagement();
         TheMovement();
@@ -153,6 +192,15 @@ public class Movement : MonoBehaviour
             StopCrouch();
         }
 
+        // Crouch buffering: the press itself is ignored while airborne (see the
+        // Grounded guard in StartCrouchOrSlide), so if the key is still held on
+        // the landing frame, enter crouch/slide now - lets players squeeze
+        // through low gaps right out of a landing.
+        if (Grounded && !wasGrounded && !isCrouching && (Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl)))
+        {
+            StartCrouchOrSlide();
+        }
+
         if (Input.GetButtonDown("Jump") && coyoteTimeCounter > 0f && !isJumping)
         {
             PerformJump();
@@ -175,11 +223,20 @@ public class Movement : MonoBehaviour
     }
         private void PerformJump()
     {
-        isJumping = true; 
+        // Standing on / falling into a fall zone: no jump, the reset takes over.
+        if (overHazard) return;
+
+        isJumping = true;
+
+        // Grounded was sampled at the top of this Update() call, before the jump
+        // was decided, so it's still stale-true here. Correct it immediately so
+        // AnimationManagement() (later this same frame) reports airborne instead
+        // of momentarily replaying a grounded state alongside the Jump trigger.
+        Grounded = false;
 
         verticalVelocity = Mathf.Sqrt(jumpHeight * 2f * gravity);
         if (anim != null) anim.SetTrigger("Jump");
-    }    
+    }
     
     private void AnimationManagement()
     {
@@ -322,7 +379,10 @@ private Vector3 HandleSlide()
         isCrouching = true;
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
 
-        if (isMoving && Input.GetKey(KeyCode.LeftShift) && Grounded && !isOnSteepSlope)
+        // Speed gate: sliding converts current speed into slideInitialSpeed, so
+        // entering it below that (e.g. landing from a walk-jump with Run+crouch
+        // held) would be a free speed boost. Only actual sprinting pace slides.
+        if (isMoving && Input.GetKey(KeyCode.LeftShift) && speed >= slideMinSpeed && Grounded && !isOnSteepSlope)
         {
             isSliding = true;
             slideVelocity = transform.forward * slideInitialSpeed;
@@ -402,6 +462,20 @@ private float VerticalForceCalc()
     public bool GetIsSliding() { return isSliding; }
     public bool GetIsRunning() { return isRunning; }
     public bool GetIsCrouching() { return isCrouching; }
+
+    // Lets external sequences (e.g. PlayerRespawn) drive the Animator while
+    // this component is disabled and AnimationManagement() isn't running.
+    public void ForceAnimatorState(bool grounded, float yVelocityValue, bool moving = false, bool running = false, bool crouching = false, bool sliding = false)
+    {
+        if (anim == null) return;
+
+        anim.SetBool("Grounded", grounded);
+        anim.SetFloat("yVelocity", yVelocityValue);
+        anim.SetBool("isMoving", moving);
+        anim.SetBool("isRunning", running);
+        anim.SetBool("isCrouching", crouching);
+        anim.SetBool("isSliding", sliding);
+    }
 }
 
 

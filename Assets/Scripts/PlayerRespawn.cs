@@ -46,7 +46,14 @@ public class PlayerRespawn : MonoBehaviour
 
         // 1. FREEZE THE PLAYER
         controller.enabled = false;
-        if (movementScript != null) movementScript.enabled = false; 
+        if (movementScript != null)
+        {
+            // Force falling pose before disabling Update() below, so the Animator
+            // doesn't stay stuck on whatever state (e.g. running) was active the
+            // instant the hazard was hit.
+            movementScript.ForceAnimatorState(grounded: false, yVelocityValue: -5f);
+            movementScript.enabled = false;
+        }
 
         // 2. PREP THE CAMERA
         CinemachineCollider camCollider = virtualCam.GetComponent<CinemachineCollider>();
@@ -115,21 +122,26 @@ public class PlayerRespawn : MonoBehaviour
         // --- PHASE 3: THE DROP IN ---
         Vector3 finalSpawnPos = currentRespawnPoint.position;
         Vector3 ceilingPos = finalSpawnPos + new Vector3(0, dropHeight, 0);
-        
+
         transform.position = ceilingPos;
         transform.rotation = Quaternion.Euler(0, currentRespawnPoint.eulerAngles.y, 0);
+
+        if (movementScript != null) movementScript.ForceAnimatorState(grounded: false, yVelocityValue: -5f);
 
         elapsed = 0f;
         while (elapsed < fallDuration)
         {
             elapsed += Time.deltaTime;
             float tFall = Mathf.Pow(elapsed / fallDuration, 2f);
-            
+
             transform.position = Vector3.Lerp(ceilingPos, finalSpawnPos, tFall);
             yield return null;
         }
 
         transform.position = finalSpawnPos;
+
+        // Landed - back to grounded/idle before handing control back to Movement.
+        if (movementScript != null) movementScript.ForceAnimatorState(grounded: true, yVelocityValue: 0f);
 
 
         // --- PHASE 4: MICRO-SETTLE ---
