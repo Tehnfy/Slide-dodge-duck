@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ThickSmoke
+  m_Shader: {fileID: 4800000, guid: c339cf2209013f04e859dc7fde82d499, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _CameraFadeEnd: 2
+    - _CameraFadeStart: 0.5
+    - _Density: 1.8
+    - _Distort: 0.5
+    - _EdgeSoftness: 0.07
+    - _Erosion: 0.5
+    - _Grit: 0.45
+    - _NoiseScale: 3.4
+    - _PulseAmount: 0.08
+    - _PulseSpeed: 1.6
+    - _Ridged: 0.75
+    - _RimWidth: 0.14
+    - _SoftDistance: 0.75
+    m_Colors:
+    - _BottomColor: {r: 0.015, g: 0.015, b: 0.02, a: 1}
+    - _RimColor: {r: 0.42, g: 0.14, b: 0.06, a: 1}
+    - _ScrollSpeed: {r: 0.05, g: -0.24, b: -0.07, a: -0.16}
+    - _TopColor: {r: 0.09, g: 0.085, b: 0.09, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

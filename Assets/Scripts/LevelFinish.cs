@@ -25,7 +25,12 @@ public class LevelFinish : MonoBehaviour
     System.Collections.IEnumerator StopPlayerSequence()
     {
         yield return new WaitForSeconds(0.3f);
-        playerControl.GetComponent<Movement>().enabled = false;
+        Movement movement = playerControl.GetComponent<Movement>();
+        movement.enabled = false;
+        // Once Movement is off nothing updates the Animator params, so clear
+        // the stale isMoving/isRunning or Idle instantly transitions back to
+        // Run (the state the player entered the trigger in).
+        movement.ForceAnimatorState(grounded: true, yVelocityValue: 0f);
         playerControl.GetComponent<Animator>().Play("Idle");
     }
 }

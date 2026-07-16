@@ -31,9 +31,14 @@ public class Movement : MonoBehaviour
     [SerializeField] private float crouchSpeed = 1f;
     [SerializeField] private float slideInitialSpeed = 6f;
     [SerializeField] private float slideMinSpeed = 7f;
-    [SerializeField] private float slideDecayRate = 1f; 
-    [SerializeField] private float normalHeight = 2f;
+    [SerializeField] private float slideDecayRate = 1f;
     [SerializeField] private float crouchHeight = 1f;
+
+    // Standing capsule size/alignment is no longer a serialized number: the
+    // CharacterController as authored in the scene (hand-aligned to the
+    // model) is the source of truth. Captured once in Start.
+    private float standingHeight;
+    private Vector3 centerOffset;
 
     [Space]
     [Header ("Jump Tuck")]
@@ -96,6 +101,14 @@ public class Movement : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
+
+        // Capture the scene-authored capsule before any runtime resizing.
+        // centerOffset is its deviation from the geometric default (centre at
+        // height/2, no lateral shift); ColliderManager re-applies it in every
+        // state so the hand alignment to the model is never lost.
+        standingHeight = controller.height;
+        centerOffset = controller.center - new Vector3(0f, standingHeight * 0.5f, 0f);
+
         if (anim == null) anim = GetComponent<Animator>();
         if (cameraFraming == null) cameraFraming = GetComponent<CameraFraming>();
 
@@ -429,24 +442,24 @@ private float VerticalForceCalc()
         if (!Grounded)
         {
             targetHeight = airborneHeight;
-            targetCenterY = airborneCenterY;
+            targetCenterY = airborneCenterY + centerOffset.y;
         }
         else if (isCrouching || isSliding)
         {
             targetHeight = crouchHeight;
-            targetCenterY = crouchHeight / 2f;
+            targetCenterY = crouchHeight / 2f + centerOffset.y;
         }
         else
         {
-            targetHeight = normalHeight;
-            targetCenterY = normalHeight / 2f;
+            targetHeight = standingHeight;
+            targetCenterY = standingHeight / 2f + centerOffset.y;
         }
 
         if (Grounded && !wasGrounded)
         {
-            controller.height = airborneHeight; 
-            controller.center = new Vector3(0, airborneHeight / 2f, 0); 
-            
+            controller.height = airborneHeight;
+            controller.center = new Vector3(centerOffset.x, airborneHeight / 2f + centerOffset.y, centerOffset.z);
+
             heightVelocity = 0f;
             centerYVelocity = 0f;
             return;
@@ -454,7 +467,7 @@ private float VerticalForceCalc()
 
         controller.height = Mathf.SmoothDamp(controller.height, targetHeight, ref heightVelocity, colliderSmoothTime);
         float smoothedCenterY = Mathf.SmoothDamp(controller.center.y, targetCenterY, ref centerYVelocity, colliderSmoothTime);
-        controller.center = new Vector3(0, smoothedCenterY, 0);
+        controller.center = new Vector3(centerOffset.x, smoothedCenterY, centerOffset.z);
     }
 
     public Vector3 GetSlideVelocity() { return slideVelocity; }

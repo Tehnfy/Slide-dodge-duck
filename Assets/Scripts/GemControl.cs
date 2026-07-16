@@ -1,6 +1,4 @@
-using UnityEditor.Search;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class GemControl : MonoBehaviour
 {
@@ -12,9 +10,6 @@ public class GemControl : MonoBehaviour
     [SerializeField] float bounceFreq = 1f;
     private Vector3 startPos;
     [SerializeField] AudioSource gemCollect;
-    [Space]
-    [Header("ScoreSys")]
-    [SerializeField] int gemScore = 10;
 
     void Start()
     {
@@ -31,7 +26,6 @@ public class GemControl : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        ScoreCotntrol.totalScore += gemScore;        
         gemCollect.Play();
         Destroy(gameObject);
     }
