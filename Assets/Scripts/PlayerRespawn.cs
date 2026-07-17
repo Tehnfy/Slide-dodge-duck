@@ -12,8 +12,8 @@ public class PlayerRespawn : MonoBehaviour
     [Header("Cinematic Transition")]
     [Tooltip("Drag your Cinemachine Camera here!")]
     [SerializeField] private CinemachineCamera virtualCam;
-    [SerializeField] private float sinkDepth = 2f;      
-    [SerializeField] private float sinkDuration = 1f;   
+    [SerializeField] private float sinkDepth = 2.4f;
+    [SerializeField] private float sinkDuration = 1.5f;
     [SerializeField] private float panDuration = 2f;    
     
     [Space]
@@ -24,12 +24,14 @@ public class PlayerRespawn : MonoBehaviour
 
     private CharacterController controller;
     private Movement movementScript;
-    private bool isRespawning; 
+    private Animator anim;
+    private bool isRespawning;
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
         movementScript = GetComponent<Movement>();
+        anim = GetComponent<Animator>();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -54,6 +56,11 @@ public class PlayerRespawn : MonoBehaviour
             movementScript.ForceAnimatorState(grounded: false, yVelocityValue: -5f);
             movementScript.enabled = false;
         }
+
+        // The params alone can't reach 'falling' from Idle/Run - the only
+        // graph transition into it starts at Jump. Force the state directly;
+        // the params above keep it from immediately transitioning back out.
+        if (anim != null) anim.CrossFadeInFixedTime("falling", 0.15f);
 
         // 2. PREP THE CAMERA
         CinemachineCollider camCollider = virtualCam.GetComponent<CinemachineCollider>();
@@ -92,9 +99,9 @@ public class PlayerRespawn : MonoBehaviour
         while (elapsed < sinkDuration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.SmoothStep(0f, 1f, elapsed / sinkDuration); 
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / sinkDuration);
             transform.position = Vector3.Lerp(startPos, undergroundPos, t);
-            yield return null; 
+            yield return null;
         }
 
 
@@ -127,6 +134,7 @@ public class PlayerRespawn : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, currentRespawnPoint.eulerAngles.y, 0);
 
         if (movementScript != null) movementScript.ForceAnimatorState(grounded: false, yVelocityValue: -5f);
+        if (anim != null) anim.CrossFadeInFixedTime("falling", 0.15f);
 
         elapsed = 0f;
         while (elapsed < fallDuration)

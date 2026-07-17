@@ -62,8 +62,10 @@ public class Movement : MonoBehaviour
     [SerializeField] private float groundCheckOffset = 0.1f;
     [SerializeField] private float hazardProbeDepth = 3f;
     [SerializeField] private float hazardProbeRadius = 0.15f;
+    [SerializeField] private float animHazardProbeRadius = 0.4f;
     private int hazardMask;
     private bool overHazard;
+    private bool animOverHazard;
 
     [Space]
     [Header("Collider Smoothing")]
@@ -180,6 +182,14 @@ public class Movement : MonoBehaviour
                      && ((1 << hazardHit.collider.gameObject.layer) & hazardMask) != 0;
         if (overHazard) coyoteTimeCounter = 0f;
 
+        // Wider probe used ONLY for animation: when a fall zone is under or
+        // right beside the feet (e.g. grazing a hole's rim in the frames
+        // before the death trigger fires), keep the Animator airborne so
+        // 'falling' doesn't flicker to Idle/Run for a split second. Gameplay
+        // (jump blocking above) keeps the thin probe so edge jumps stay fair.
+        animOverHazard = Physics.SphereCast(origin, animHazardProbeRadius, Vector3.down, out RaycastHit animHazardHit, hazardProbeDepth, groundMask | hazardMask, QueryTriggerInteraction.Collide)
+                         && ((1 << animHazardHit.collider.gameObject.layer) & hazardMask) != 0;
+
         InputManagement();
         TheMovement();
 
@@ -273,13 +283,17 @@ public class Movement : MonoBehaviour
         {
             Debug.Log("SITTED");
         }
+        // Over a fall zone the Animator is told 'airborne' even while the
+        // capsule still technically touches the rim - see animOverHazard.
+        bool animGrounded = Grounded && !animOverHazard;
+
         anim.SetBool("isMoving", isMoving);
         anim.SetBool("isCrouching",isCrouching);
         anim.SetBool("isSliding", isSliding);
-        anim.SetBool("Grounded", Grounded);
+        anim.SetBool("Grounded", animGrounded);
         anim.SetBool("isRunning", isRunning);
 
-        float speedAnimator = Grounded ? 0f : verticalVelocity;
+        float speedAnimator = animGrounded ? 0f : verticalVelocity;
         anim.SetFloat("yVelocity", speedAnimator);
     }
 
