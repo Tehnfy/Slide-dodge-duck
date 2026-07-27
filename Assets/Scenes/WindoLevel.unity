@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 27359794}
   - component: {fileID: 27359793}
   - component: {fileID: 27359792}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -638,7 +638,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 122927710}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DoubleStack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1239,7 +1239,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 236086406}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1501,7 +1501,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 273889444}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DoubleStack (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2088,7 +2088,7 @@ GameObject:
   - component: {fileID: 321017832}
   - component: {fileID: 321017831}
   - component: {fileID: 321017830}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: LampPost (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2196,7 +2196,7 @@ GameObject:
   - component: {fileID: 372090116}
   - component: {fileID: 372090118}
   - component: {fileID: 372090117}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Street Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2318,7 +2318,7 @@ GameObject:
   - component: {fileID: 387901698}
   - component: {fileID: 387901697}
   - component: {fileID: 387901696}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4120,6 +4120,7 @@ GameObject:
   - component: {fileID: 621493900}
   - component: {fileID: 621493899}
   - component: {fileID: 621493898}
+  - component: {fileID: 621493901}
   m_Layer: 6
   m_Name: Window_portal
   m_TagString: Untagged
@@ -4149,7 +4150,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 621493896}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 1918932007}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -4157,7 +4158,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -4216,6 +4217,27 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 621493896}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &621493901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621493896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e69644f9d7a16d4da6c36b699f08e59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  destination: {fileID: 1142708931}
+  verticalOffset: 0.05
+  matchDestinationYaw: 0
+  flashOverlay: {fileID: 0}
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  fadeInDuration: 0.35
+  holdDuration: 0.1
+  fadeOutDuration: 0.55
+  virtualCam: {fileID: 8538380426839475722}
 --- !u!1 &635202157
 GameObject:
   m_ObjectHideFlags: 0
@@ -4228,7 +4250,7 @@ GameObject:
   - component: {fileID: 635202161}
   - component: {fileID: 635202160}
   - component: {fileID: 635202159}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4336,7 +4358,7 @@ GameObject:
   - component: {fileID: 659421846}
   - component: {fileID: 659421845}
   - component: {fileID: 659421844}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4444,7 +4466,7 @@ GameObject:
   - component: {fileID: 659516356}
   - component: {fileID: 659516355}
   - component: {fileID: 659516354}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4825,7 +4847,7 @@ GameObject:
   - component: {fileID: 673302581}
   - component: {fileID: 673302580}
   - component: {fileID: 673302579}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4933,7 +4955,7 @@ GameObject:
   - component: {fileID: 678511685}
   - component: {fileID: 678511684}
   - component: {fileID: 678511683}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5351,7 +5373,7 @@ GameObject:
   - component: {fileID: 749394102}
   - component: {fileID: 749394101}
   - component: {fileID: 749394100}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Street_Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6010,7 +6032,7 @@ GameObject:
   - component: {fileID: 799413494}
   - component: {fileID: 799413493}
   - component: {fileID: 799413492}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6473,7 +6495,7 @@ GameObject:
   - component: {fileID: 841114240}
   - component: {fileID: 841114239}
   - component: {fileID: 841114238}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: LampPost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7064,7 +7086,7 @@ GameObject:
   - component: {fileID: 898651963}
   - component: {fileID: 898651962}
   - component: {fileID: 898651961}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Start Platform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7443,7 +7465,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 926894148}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DoubleStack (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8696,7 +8718,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1028963367}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9423,7 +9445,7 @@ GameObject:
   - component: {fileID: 1132940783}
   - component: {fileID: 1132940782}
   - component: {fileID: 1132940781}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9531,7 +9553,7 @@ GameObject:
   - component: {fileID: 1142708934}
   - component: {fileID: 1142708933}
   - component: {fileID: 1142708932}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: PlatformPortal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9639,7 +9661,7 @@ GameObject:
   - component: {fileID: 1217498182}
   - component: {fileID: 1217498181}
   - component: {fileID: 1217498180}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Char
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9746,7 +9768,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1263767735}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9782,7 +9804,7 @@ GameObject:
   - component: {fileID: 1268937571}
   - component: {fileID: 1268937570}
   - component: {fileID: 1268937569}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10279,7 +10301,7 @@ GameObject:
   - component: {fileID: 1333678793}
   - component: {fileID: 1333678792}
   - component: {fileID: 1333678791}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10772,7 +10794,7 @@ GameObject:
   - component: {fileID: 1409196154}
   - component: {fileID: 1409196153}
   - component: {fileID: 1409196152}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10882,7 +10904,7 @@ GameObject:
   - component: {fileID: 1429925789}
   - component: {fileID: 1429925788}
   - component: {fileID: 1429925787}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Street_Ground (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12095,7 +12117,7 @@ GameObject:
   - component: {fileID: 1494455253}
   - component: {fileID: 1494455252}
   - component: {fileID: 1494455251}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Char3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19125,7 +19147,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1707173355}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DoubleStack (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20590,7 +20612,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1735910143}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DoubleStack (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20955,7 +20977,7 @@ GameObject:
   - component: {fileID: 1765244217}
   - component: {fileID: 1765244219}
   - component: {fileID: 1765244218}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Street Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21272,7 +21294,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1775460713}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: BranchPlatforms
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21488,7 +21510,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1792663109}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ground_level
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21943,7 +21965,7 @@ GameObject:
   - component: {fileID: 1852332183}
   - component: {fileID: 1852332182}
   - component: {fileID: 1852332181}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22051,7 +22073,7 @@ GameObject:
   - component: {fileID: 1856714938}
   - component: {fileID: 1856714937}
   - component: {fileID: 1856714936}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bench_Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22159,7 +22181,7 @@ GameObject:
   - component: {fileID: 1871133772}
   - component: {fileID: 1871133771}
   - component: {fileID: 1871133770}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -22420,6 +22442,19 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!134 &1918932007
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &1961271882
 GameObject:
   m_ObjectHideFlags: 0
@@ -23401,7 +23436,7 @@ GameObject:
   - component: {fileID: 2126661759}
   - component: {fileID: 2126661758}
   - component: {fileID: 2126661757}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tree_Branch
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23509,7 +23544,7 @@ GameObject:
   - component: {fileID: 2135451033}
   - component: {fileID: 2135451032}
   - component: {fileID: 2135451031}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Char2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23985,6 +24020,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b92b5e7a95318a441a4297a26cdcbad4, type: 3}
+--- !u!114 &8538380426839475722 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2582408091108881755, guid: b92b5e7a95318a441a4297a26cdcbad4, type: 3}
+  m_PrefabInstance: {fileID: 8538380426839475721}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
