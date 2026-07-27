@@ -306,7 +306,7 @@ private void TheMovement()
         {
             Vector3 steepDown = Vector3.ProjectOnPlane(Vector3.down, groundNormal).normalized;
             finalMove = steepDown * steepSlopeSlideSpeed;
-            isSliding = false;
+            EndSlide();
 
             finalMove.y -= 2f;
         }
@@ -391,12 +391,15 @@ private Vector3 HandleSlide()
             }
         }
 
+        // Captured before EndSlide zeroes it, so this frame still moves.
+        Vector3 frameMove = slideVelocity;
+
         if (slideVelocity.magnitude <= crouchSpeed && groundSlopeAngle <= 2f)
         {
-            isSliding = false;
+            EndSlide();
         }
 
-        return slideVelocity;
+        return frameMove;
     }
 
     private void StartCrouchOrSlide()
@@ -426,7 +429,21 @@ private Vector3 HandleSlide()
     private void StopCrouch()
     {
         isCrouching = false;
+        EndSlide();
+    }
+
+    // Sliding runs on slideVelocity while 'speed' (the walk/run system) sits
+    // frozen at whatever it was when the slide began. Handing the slide's
+    // final pace back to 'speed' is what stops movement snapping up to the
+    // pre-slide speed on release - which otherwise let players 'pump' speed
+    // by tapping crouch, most visibly when climbing slopes.
+    private void EndSlide()
+    {
+        if (!isSliding) return;
+
         isSliding = false;
+        speed = new Vector3(slideVelocity.x, 0f, slideVelocity.z).magnitude;
+        slideVelocity = Vector3.zero;
     }
 private float VerticalForceCalc()
     {
