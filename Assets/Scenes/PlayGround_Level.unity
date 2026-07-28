@@ -12631,7 +12631,9 @@ MonoBehaviour:
   levelBGM: {fileID: 461386881}
   fadeOut: {fileID: 1733578257}
   fadeIn: {fileID: 1374920496}
-  fadeOutHold: 1
+  fadeOutDuration: 0.6
+  fadeInDuration: 1.5
+  returnTarget: 0
   verticalOffset: 0.05
   fallbackSpawn: {fileID: 0}
   virtualCam: {fileID: 0}
@@ -12741,6 +12743,9 @@ MonoBehaviour:
   levelEndSound: {fileID: 90550488}
   levelBGM: {fileID: 461386881}
   fadeOut: {fileID: 1733578257}
+  nextLevel: {fileID: 0}
+  nextLevelName: 
+  loadDelay: 2
 --- !u!4 &1370097022 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 755659727201431155, guid: 0d4eaa2b56dc8844bbc3f061893e4e11, type: 3}
@@ -13628,6 +13633,7 @@ GameObject:
   - component: {fileID: 1447037006}
   - component: {fileID: 1447037005}
   - component: {fileID: 1447037004}
+  - component: {fileID: 1447037008}
   m_Layer: 5
   m_Name: UI
   m_TagString: Untagged
@@ -13719,6 +13725,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1447037008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447037003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f264e12b03508d64cb17d345cb6d660a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fadeIn: {fileID: 1374920496}
+  fadeInDuration: 1.5
 --- !u!1001 &1464669228
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14194,7 +14214,9 @@ MonoBehaviour:
   levelBGM: {fileID: 461386881}
   fadeOut: {fileID: 1733578257}
   fadeIn: {fileID: 1374920496}
-  fadeOutHold: 1
+  fadeOutDuration: 0.6
+  fadeInDuration: 1.5
+  returnTarget: 0
   verticalOffset: 0.05
   fallbackSpawn: {fileID: 0}
   virtualCam: {fileID: 0}

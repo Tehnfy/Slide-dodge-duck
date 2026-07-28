@@ -24,8 +24,8 @@ EditorBuildSettings:
     path: Assets/Scenes/PlayGround_Level.unity
     guid: 43aaa27304d824644810d40428a277ee
   - enabled: 1
-    path: Assets/Scenes/L1_intro.unity
-    guid: ab7348d7528e89f4eb9bbd616ccbea11
+    path: Assets/Scenes/WindowLevel.unity
+    guid: 7810f5b8fa158a7428b428924ec292cb
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

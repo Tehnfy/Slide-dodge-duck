@@ -659,6 +659,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!43 &158925644
 Mesh:
   m_ObjectHideFlags: 0
@@ -3107,6 +3108,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &500409889
 GameObject:
   m_ObjectHideFlags: 0
@@ -5679,6 +5681,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &787974549
 GameObject:
   m_ObjectHideFlags: 0
@@ -6126,6 +6129,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &808780894
 GameObject:
   m_ObjectHideFlags: 0
@@ -10428,6 +10432,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &1263767734
 GameObject:
   m_ObjectHideFlags: 0
@@ -12051,6 +12056,7 @@ GameObject:
   - component: {fileID: 1447037006}
   - component: {fileID: 1447037005}
   - component: {fileID: 1447037004}
+  - component: {fileID: 1447037008}
   m_Layer: 5
   m_Name: UI
   m_TagString: Untagged
@@ -12142,6 +12148,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1447037008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447037003}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f264e12b03508d64cb17d345cb6d660a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fadeIn: {fileID: 1374920496}
+  fadeInDuration: 1.5
 --- !u!1 &1460020639
 GameObject:
   m_ObjectHideFlags: 0
@@ -12280,6 +12300,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &1477130508
 GameObject:
   m_ObjectHideFlags: 0
@@ -14502,6 +14523,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!114 &1572137342
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14531,6 +14553,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &1602788059
 GameObject:
   m_ObjectHideFlags: 0
@@ -23807,6 +23830,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!134 &1918932007
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -24927,6 +24951,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1 &2135451029
 GameObject:
   m_ObjectHideFlags: 0
@@ -25340,6 +25365,7 @@ MonoBehaviour:
   standProbeHeight: 0.3
   standProbePadding: 0.05
   jumpDetectVelocity: 0.5
+  releaseGrace: 0.14
 --- !u!1001 &3026298988565908879
 PrefabInstance:
   m_ObjectHideFlags: 0
