@@ -383,7 +383,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca7de3aefa901374ba29464584a3109a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CameraRadius: 8
+  CameraRadius: 0.4
   Decollision:
     Enabled: 1
     ObstacleLayers:
@@ -924,7 +924,6 @@ MonoBehaviour:
   slideDecayRate: 7
   crouchHeight: 1
   airborneHeight: 1.2
-  airborneCenterY: 1.4
   jumpBufferTime: 0.2
   coyoteTime: 0.3
   turnSmoothTime: 0.1
@@ -935,6 +934,8 @@ MonoBehaviour:
   hazardProbeDepth: 3
   hazardProbeRadius: 0.15
   animHazardProbeRadius: 0.4
+  safeGroundEdgeMargin: 0.4
+  safeGroundProbeCount: 8
   colliderSmoothTime: 0.1
   slideAcceleration: 8
   steepSlopeSlideSpeed: 5

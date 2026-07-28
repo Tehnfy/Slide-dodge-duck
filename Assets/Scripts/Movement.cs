@@ -42,8 +42,8 @@ public class Movement : MonoBehaviour
 
     [Space]
     [Header ("Jump Tuck")]
+    [Tooltip("Capsule height while rising. The tuck is taken off the TOP - the bottom stays level with the model's feet in every state - so this is how far the capsule folds down from the head.")]
     [SerializeField] private float airborneHeight = 1.2f;
-    [SerializeField] private float airborneCenterY = 1.4f;
     [Space]
     [Header("Jump Forgiveness")]
     [SerializeField] private float jumpBufferTime = 0.2f;
@@ -222,7 +222,7 @@ public class Movement : MonoBehaviour
 
         bool isMoving = Mathf.Abs(moveInput) > 0.1f || Mathf.Abs(turnInput) > 0.1f;
         cameraFraming.UpdateZoom(isMoving);
-        cameraFraming.UpdateCrane();
+        cameraFraming.UpdateCrane(Grounded);
 
         ColliderManager();
         AnimationManagement();
@@ -551,7 +551,6 @@ private float VerticalForceCalc()
     private void ColliderManager()
     {
         float targetHeight;
-        float targetCenterY; 
 
         if (!Grounded)
         {
@@ -564,18 +563,23 @@ private float VerticalForceCalc()
             bool rising = verticalVelocity > 0f;
 
             targetHeight = rising ? airborneHeight : standingHeight;
-            targetCenterY = (rising ? airborneCenterY : standingHeight * 0.5f) + centerOffset.y;
         }
         else if (isCrouching || isSliding)
         {
             targetHeight = crouchHeight;
-            targetCenterY = crouchHeight / 2f + centerOffset.y;
         }
         else
         {
             targetHeight = standingHeight;
-            targetCenterY = standingHeight / 2f + centerOffset.y;
         }
+
+        // One formula for every state, deliberately: centerOffset.y IS the
+        // authored capsule bottom, so deriving the centre from it pins the bottom
+        // to the model's feet no matter what the height is doing. Sizing the
+        // capsule any other way lifts the collider up the body and the model
+        // visibly drags behind it - which is what the jump tuck used to do, being
+        // 0.8m off the feet while rising.
+        float targetCenterY = targetHeight * 0.5f + centerOffset.y;
 
         // No landing snap: the capsule is already unfolded by touchdown, so
         // forcing it back to the tucked size here would only re-introduce the

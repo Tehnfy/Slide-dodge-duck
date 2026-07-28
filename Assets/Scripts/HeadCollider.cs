@@ -2,10 +2,20 @@ using UnityEngine;
 
 // Physical "head" volume for the player. The CharacterController only
 // collides through its own capsule, so an extra SphereCollider on the same
-// object is ignored by controller.Move(). This component keeps the sphere
-// centred on the capsule's top point (following the crouch / airborne-tuck
-// resizing done in Movement.ColliderManager) and manually pushes the player
-// out of any geometry the sphere overlaps.
+// object is ignored by controller.Move(). This component keeps the sphere pinned
+// to the top of that capsule and manually pushes the player out of any geometry
+// the sphere overlaps.
+//
+// Deliberately tied to the capsule rather than to a separate notion of where the
+// model's head is: the capsule is the character's physical representation, so the
+// head volume stays honest to whatever it is doing - dropping with a crouch, and
+// coming down with the jump tuck as the character curls up. Movement's tuck only
+// ever folds the capsule down from the top (its bottom is pinned to the feet), so
+// following the top is what tracks that fold.
+//
+// Anchoring on the top of the capsule's cylinder section instead would behave
+// identically: the radius never changes, so that constant is absorbed by
+// headOffset below and cancels out.
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(SphereCollider))]
 public class HeadCollider : MonoBehaviour
@@ -25,10 +35,10 @@ public class HeadCollider : MonoBehaviour
         controller = GetComponent<CharacterController>();
         head = GetComponent<SphereCollider>();
 
-        // Scene-authored offset of the sphere from the capsule's top point
-        // (hand-aligned to the model, e.g. sunk slightly below the top).
-        // Captured before any runtime resizing and re-applied every frame, so
-        // the sphere rides the capsule top without losing that alignment.
+        // Scene-authored offset of the sphere from the standing capsule's top
+        // point (hand-aligned to the model, e.g. sunk slightly below the top).
+        // Captured before any runtime resizing and re-applied every frame, so the
+        // sphere rides the capsule top without losing that alignment.
         headOffset = head.center - (controller.center + Vector3.up * (controller.height * 0.5f));
     }
 
