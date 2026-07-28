@@ -12630,6 +12630,11 @@ MonoBehaviour:
   levelEndSound: {fileID: 824640882}
   levelBGM: {fileID: 461386881}
   fadeOut: {fileID: 1733578257}
+  fadeIn: {fileID: 1374920496}
+  fadeOutHold: 1
+  verticalOffset: 0.05
+  fallbackSpawn: {fileID: 0}
+  virtualCam: {fileID: 0}
 --- !u!1001 &1366226105
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14188,6 +14193,11 @@ MonoBehaviour:
   levelEndSound: {fileID: 824640882}
   levelBGM: {fileID: 461386881}
   fadeOut: {fileID: 1733578257}
+  fadeIn: {fileID: 1374920496}
+  fadeOutHold: 1
+  verticalOffset: 0.05
+  fallbackSpawn: {fileID: 0}
+  virtualCam: {fileID: 0}
 --- !u!64 &1527674148
 MeshCollider:
   m_ObjectHideFlags: 0

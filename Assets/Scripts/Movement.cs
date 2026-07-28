@@ -63,9 +63,22 @@ public class Movement : MonoBehaviour
     [SerializeField] private float hazardProbeDepth = 3f;
     [SerializeField] private float hazardProbeRadius = 0.15f;
     [SerializeField] private float animHazardProbeRadius = 0.4f;
+
+    [Space]
+    [Header("Safe Ground (FallOff return point)")]
+    [Tooltip("How far clear of a ledge the player must be for a spot to be worth returning them to. Larger values set them down further from the edge, but on platforms smaller than roughly twice this they will stop qualifying at all.")]
+    [SerializeField] private float safeGroundEdgeMargin = 0.4f;
+    [Tooltip("Probes cast in a ring at that margin. More catches awkward corners more reliably.")]
+    [SerializeField] private int safeGroundProbeCount = 8;
     private int hazardMask;
     private bool overHazard;
     private bool animOverHazard;
+
+    // The last spot the player was genuinely standing on, for FallOff volumes to
+    // return them to after a missed jump.
+    private Vector3 lastSafeGround;
+    private float lastSafeGroundYaw;
+    private bool hasSafeGround;
 
     [Space]
     [Header("Collider Smoothing")]
@@ -144,11 +157,13 @@ public class Movement : MonoBehaviour
         // back to Idle and refreshes coyote time mid-jump.
         if (isJumping && verticalVelocity > 0f) Grounded = false;
 
+        bool solidFooting = false;
+
         if (Grounded)
         {
-            groundNormal = hit.normal;
+            groundNormal = ResolveGroundNormal(origin, out solidFooting);
             groundSlopeAngle = Vector3.Angle(Vector3.up, groundNormal);
-            isOnSteepSlope = groundSlopeAngle > controller.slopeLimit; 
+            isOnSteepSlope = groundSlopeAngle > controller.slopeLimit;
         }
         else
         {
@@ -182,6 +197,18 @@ public class Movement : MonoBehaviour
                      && ((1 << hazardHit.collider.gameObject.layer) & hazardMask) != 0;
         if (overHazard) coyoteTimeCounter = 0f;
 
+        // Remember where they were last properly standing, so a FallOff volume
+        // can set them back down there. Deliberately strict: real ground
+        // underfoot (an edge graze does not count, or they would be returned to
+        // the very lip they slipped off), a walkable slope, and no fall zone
+        // below - otherwise we would hand back a spot that drops them again.
+        if (Grounded && solidFooting && !isOnSteepSlope && !overHazard && IsClearOfLedges(origin))
+        {
+            lastSafeGround = transform.position;
+            lastSafeGroundYaw = transform.eulerAngles.y;
+            hasSafeGround = true;
+        }
+
         // Wider probe used ONLY for animation: when a fall zone is under or
         // right beside the feet (e.g. grazing a hole's rim in the frames
         // before the death trigger fires), keep the Animator airborne so
@@ -200,6 +227,62 @@ public class Movement : MonoBehaviour
         ColliderManager();
         AnimationManagement();
         }
+    // A SphereCast that only grazes a platform's lip reports the *edge's*
+    // interpolated normal - measured at 44 degrees ten centimetres past a
+    // branch platform - which passes as a walkable slope because it is under
+    // slopeLimit. Feeding that into TheMovement()'s ProjectOnPlane tilts the
+    // player's movement back into the ledge and halves their speed, so they
+    // hang on the corner instead of walking off it.
+    //
+    // A thin ray straight down cannot graze an edge, so it gives the honest
+    // surface underfoot. Nothing directly below means the sphere is touching
+    // an edge and nothing else: report flat ground so movement stays
+    // unimpeded and gravity carries the player off naturally.
+    // True only when the player is standing well inside a surface rather than out
+    // on its lip, so the spot recorded for a FallOff return is somewhere they can
+    // actually stand - set them down on the very edge they slipped off and the
+    // return feels like it barely saved them.
+    //
+    // The probes reach a little further than the ground check itself, so a step
+    // or a slope within the margin still counts as ground and only a genuine drop
+    // disqualifies the spot.
+    private bool IsClearOfLedges(Vector3 origin)
+    {
+        if (safeGroundEdgeMargin <= 0f || safeGroundProbeCount <= 0) return true;
+
+        float rayDistance = controller.center.y + groundCheckOffset + safeGroundEdgeMargin;
+
+        for (int i = 0; i < safeGroundProbeCount; i++)
+        {
+            float angle = i * (360f / safeGroundProbeCount) * Mathf.Deg2Rad;
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * safeGroundEdgeMargin;
+
+            if (!Physics.Raycast(origin + offset, Vector3.down, rayDistance, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // solidFooting reports whether there is real geometry underfoot, as opposed
+    // to the capsule merely brushing an edge - also what qualifies a spot as
+    // somewhere worth returning the player to.
+    private Vector3 ResolveGroundNormal(Vector3 origin, out bool solidFooting)
+    {
+        float rayDistance = controller.center.y + groundCheckOffset;
+
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit rayHit, rayDistance, groundMask, QueryTriggerInteraction.Ignore))
+        {
+            solidFooting = true;
+            return rayHit.normal;
+        }
+
+        solidFooting = false;
+        return Vector3.up;
+    }
+
     private void InputManagement()
     {
         moveInput = Input.GetAxisRaw("Vertical");
@@ -472,8 +555,16 @@ private float VerticalForceCalc()
 
         if (!Grounded)
         {
-            targetHeight = airborneHeight;
-            targetCenterY = airborneCenterY + centerOffset.y;
+            // Tucked on the way up, then unfolding once past the peak so the
+            // capsule is back to full size before touchdown - which is both more
+            // natural and stops it growing down into the floor after landing.
+            // That post-landing growth is what made the capsule flicker in and
+            // out of anything probing for a rider, double-triggering the
+            // branch response on Platform_floating.
+            bool rising = verticalVelocity > 0f;
+
+            targetHeight = rising ? airborneHeight : standingHeight;
+            targetCenterY = (rising ? airborneCenterY : standingHeight * 0.5f) + centerOffset.y;
         }
         else if (isCrouching || isSliding)
         {
@@ -486,20 +577,21 @@ private float VerticalForceCalc()
             targetCenterY = standingHeight / 2f + centerOffset.y;
         }
 
-        if (Grounded && !wasGrounded)
-        {
-            controller.height = airborneHeight;
-            controller.center = new Vector3(centerOffset.x, airborneHeight / 2f + centerOffset.y, centerOffset.z);
-
-            heightVelocity = 0f;
-            centerYVelocity = 0f;
-            return;
-        }
-
+        // No landing snap: the capsule is already unfolded by touchdown, so
+        // forcing it back to the tucked size here would only re-introduce the
+        // expansion-into-the-floor it was previously masking.
         controller.height = Mathf.SmoothDamp(controller.height, targetHeight, ref heightVelocity, colliderSmoothTime);
         float smoothedCenterY = Mathf.SmoothDamp(controller.center.y, targetCenterY, ref centerYVelocity, colliderSmoothTime);
         controller.center = new Vector3(centerOffset.x, smoothedCenterY, centerOffset.z);
     }
+
+    // Positive while rising. Lets things being stood on tell a jump-off from a
+    // walk-off (see Platform_floating).
+    public float GetVerticalVelocity() { return verticalVelocity; }
+
+    public bool HasLastSafeGround() { return hasSafeGround; }
+    public Vector3 GetLastSafeGround() { return lastSafeGround; }
+    public float GetLastSafeGroundYaw() { return lastSafeGroundYaw; }
 
     public Vector3 GetSlideVelocity() { return slideVelocity; }
     public float GetGroundAngle() { return groundSlopeAngle; }

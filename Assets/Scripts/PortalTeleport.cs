@@ -12,8 +12,17 @@ public class PortalTeleport : MonoBehaviour
     [Tooltip("Where the player lands. If this object has a Collider, the player is placed on its top face.")]
     [SerializeField] private Transform destination;
     [SerializeField] private float verticalOffset = 0.05f;
-    [Tooltip("Turn the player to face the same way as the destination on arrival.")]
-    [SerializeField] private bool matchDestinationYaw;
+
+    // Which way the player ends up looking once they land.
+    private enum ArrivalFacing
+    {
+        Unchanged,        // keep whatever way they were facing entering the portal
+        MatchDestination, // face the same way as the destination transform
+        MatchCamera       // face where the camera is looking, so forward is forward
+    }
+
+    [Tooltip("Unchanged: keeps their entry facing. MatchDestination: faces the destination's yaw. MatchCamera: faces where the camera looks, so pushing forward carries on straight ahead.")]
+    [SerializeField] private ArrivalFacing arrivalFacing = ArrivalFacing.MatchCamera;
 
     [Space]
     [Header("White Flash")]
@@ -28,6 +37,11 @@ public class PortalTeleport : MonoBehaviour
     [Header("Camera")]
     [Tooltip("Warped on teleport so the camera cuts across instead of damping its way over. Auto-found if empty.")]
     [SerializeField] private CinemachineCamera virtualCam;
+
+    [Space]
+    [Header("Arrival Lights")]
+    [Tooltip("Lights at the destination that stop being static set-dressing and start travelling with the player once they land.")]
+    [SerializeField] private PlayerFollowLight[] arrivalLights;
 
     // Only set when we built the overlay ourselves - a hand-wired one belongs to
     // the scene and must not be toggled or destroyed by us.
@@ -97,8 +111,13 @@ public class PortalTeleport : MonoBehaviour
         Vector3 from = player.position;
         Vector3 to = ResolveDestination();
 
+        // Read the camera's heading before the player is turned: the vcam is a
+        // child of the player, so rotating the player nudges its transform until
+        // Cinemachine rewrites it in LateUpdate.
+        float cameraYaw = ResolveCameraYaw(player);
+
         player.position = to;
-        if (matchDestinationYaw) player.rotation = Quaternion.Euler(0f, destination.eulerAngles.y, 0f);
+        ApplyArrivalFacing(player, cameraYaw);
 
         // Without this the orbital follow damps its way across the entire level
         // and the player watches it arrive as the flash clears.
@@ -106,6 +125,16 @@ public class PortalTeleport : MonoBehaviour
         {
             Transform warpTarget = virtualCam.Target.TrackingTarget != null ? virtualCam.Target.TrackingTarget : player;
             virtualCam.OnTargetObjectWarped(warpTarget, to - from);
+        }
+
+        // Hand the destination's lights over to the player. Done after the warp
+        // so lights deriving their offset measure it against the landing spot.
+        if (arrivalLights != null)
+        {
+            foreach (PlayerFollowLight arrivalLight in arrivalLights)
+            {
+                if (arrivalLight != null) arrivalLight.BeginFollowing(player);
+            }
         }
 
         // Control comes back at the teleport, not at the end of the fade - the
@@ -116,6 +145,33 @@ public class PortalTeleport : MonoBehaviour
         yield return Fade(1f, 0f, fadeOutDuration);
 
         isTeleporting = false;
+    }
+
+    // Yaw only - pitch and roll would tip the character over.
+    private void ApplyArrivalFacing(Transform player, float cameraYaw)
+    {
+        switch (arrivalFacing)
+        {
+            case ArrivalFacing.MatchDestination:
+                player.rotation = Quaternion.Euler(0f, destination.eulerAngles.y, 0f);
+                break;
+
+            // Movement steers relative to this same camera, so aligning the
+            // player with it means holding forward carries straight on through
+            // the portal instead of veering off at whatever angle they entered.
+            case ArrivalFacing.MatchCamera:
+                player.rotation = Quaternion.Euler(0f, cameraYaw, 0f);
+                break;
+        }
+    }
+
+    private float ResolveCameraYaw(Transform player)
+    {
+        if (virtualCam != null) return virtualCam.transform.eulerAngles.y;
+        if (Camera.main != null) return Camera.main.transform.eulerAngles.y;
+
+        // No camera to align to - leave them as they are.
+        return player.eulerAngles.y;
     }
 
     private Vector3 ResolveDestination()
